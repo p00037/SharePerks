@@ -1,0 +1,131 @@
+﻿@page "/Account/Login"
+@attribute [AllowAnonymous]
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Identity
+@using Shareholder.Data
+
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+@inject ILogger<Login> Logger
+@inject NavigationManager NavigationManager
+@inject IdentityRedirectManager RedirectManager
+
+<PageTitle>ログイン</PageTitle>
+
+<MudText Typo="Typo.h3" GutterBottom="true">ログイン</MudText>
+
+<MudGrid>
+    <MudItem md="6">
+        <StatusMessage Message="@errorMessage" />
+        <EditForm Model="Input" method="post" OnValidSubmit="LoginUser" FormName="login">
+            <DataAnnotationsValidator />
+
+            <MudText GutterBottom="true" Typo="Typo.body1">ローカルアカウントでログインしてください。</MudText>
+
+            <MudGrid>
+                <MudItem md="12">
+                    <MudStaticTextField For="@(() => Input.Email)" @bind-Value="Input.Email" 
+                        Label="メールアドレス" Placeholder="name@example.com"
+                        UserAttributes="@(new() { { "autocomplete", "username" }, { "aria-required", "true" } } )" />
+                </MudItem>
+                <MudItem md="12">
+                    <MudStaticTextField For="@(() => Input.Password)" @bind-Value="Input.Password" 
+                        Label="パスワード" InputType="InputType.Password" Placeholder="password"
+                        UserAttributes="@(new() { { "autocomplete", "current-password" }, { "aria-required", "true" } } )" />
+                </MudItem>
+                <MudItem md="12">
+                    <MudStaticCheckBox For="@(() => Input.RememberMe)" @bind-Value="Input.RememberMe">ログイン状態を保持</MudStaticCheckBox>
+                </MudItem>
+                <MudItem md="12">
+                    <MudStaticButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" FormAction="FormAction.Submit">ログイン</MudStaticButton>
+                </MudItem>
+            </MudGrid>
+        </EditForm>
+
+        <MudGrid Class="mt-4">
+            <MudItem md="12">
+                <MudLink Href="Account/ForgotPassword">パスワードをお忘れですか？</MudLink><br />
+                <MudLink Href="@(NavigationManager.GetUriWithQueryParameters("Account/Register", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))">新規登録</MudLink><br />
+                <MudLink Href="Account/ResendEmailConfirmation">確認メールを再送する</MudLink>
+            </MudItem>
+        </MudGrid>
+    </MudItem>
+    <MudItem md="6">
+        <MudText GutterBottom="true" Typo="Typo.body1">外部サービスでログイン</MudText>
+
+        <ExternalLoginPicker />
+    </MudItem>
+</MudGrid>
+
+@code {
+    private string? errorMessage;
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = new();
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (HttpMethods.IsGet(HttpContext.Request.Method))
+        {
+            // Clear the existing external cookie to ensure a clean login process
+            await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
+        }
+    }
+
+    public async Task LoginUser()
+    {
+        var user = await UserManager.FindByEmailAsync(Input.Email);
+
+        // This doesn't count login failures towards account lockout
+        // To enable password failures to trigger account lockout, set lockoutOnFailure: true
+        if (user is null || !await UserManager.IsInRoleAsync(user, ApplicationRoles.User))
+        {
+            errorMessage = "エラー: ログインに失敗しました。";
+            return;
+        }
+
+        var result = await SignInManager.PasswordSignInAsync(user, Input.Password, Input.RememberMe, lockoutOnFailure: false);
+        if (result.Succeeded)
+        {
+            Logger.LogInformation("User logged in.");
+            RedirectManager.RedirectTo(ReturnUrl);
+        }
+        else if (result.RequiresTwoFactor)
+        {
+            RedirectManager.RedirectTo(
+                "Account/LoginWith2fa",
+                new() { ["returnUrl"] = ReturnUrl, ["rememberMe"] = Input.RememberMe });
+        }
+        else if (result.IsLockedOut)
+        {
+            Logger.LogWarning("User account locked out.");
+            RedirectManager.RedirectTo("Account/Lockout");
+        }
+        else
+        {
+            errorMessage = "エラー: ログインに失敗しました。";
+        }
+    }
+
+    private sealed class InputModel
+    {
+        [Required(ErrorMessage = "この項目は必須です。")]
+        [EmailAddress(ErrorMessage = "有効なメールアドレス形式で入力してください。")]
+        public string Email { get; set; } = "";
+
+        [Required(ErrorMessage = "この項目は必須です。")]
+        [DataType(DataType.Password)]
+        public string Password { get; set; } = "";
+
+        [Display(Name = "ログイン状態を保持しますか？")]
+        public bool RememberMe { get; set; }
+    }
+}

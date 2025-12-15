@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="SharePerks/Admin.Client/Admin.Client.csproj" />
+  <Project Path="SharePerks/Admin/Admin.csproj" />
+  <Project Path="SharePerks/SharePerks.Client/Shareholder.Client.csproj" />
+  <Project Path="SharePerks/SharePerks/Shareholder.csproj" />
+</Solution>
