@@ -1,13 +1,53 @@
+using System.Collections.ObjectModel;
+using System.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
+using Serilog;
+using Serilog.Sinks.MSSqlServer;
 using Shareholder.Client.Pages;
 using Shareholder.Components;
 using Shareholder.Components.Account;
 using Shareholder.Data;
-using Microsoft.AspNetCore.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
+// Serilog 構成
+var sinkOptions = new MSSqlServerSinkOptions
+{
+    TableName = "LogsShareholder",
+    AutoCreateSqlTable = true // 開発時のみ。運用時は false にして手動作成推奨。
+};
+
+var columnOptions = new ColumnOptions
+{
+    Store = new Collection<StandardColumn>
+    {
+        StandardColumn.TimeStamp,
+        StandardColumn.Level,
+        StandardColumn.Message,
+        StandardColumn.Exception,
+        StandardColumn.Properties
+    },
+    TimeStamp = { DataType = SqlDbType.DateTimeOffset }
+};
+
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Debug()
+    .WriteTo.Console()
+    .WriteTo.MSSqlServer(
+        connectionString: connectionString,
+        sinkOptions: sinkOptions,
+        columnOptions: columnOptions,
+        restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Information
+    )
+    .Enrich.FromLogContext()
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 
 // Add MudBlazor services
 builder.Services.AddMudServices();
@@ -29,7 +69,6 @@ builder.Services.AddAuthentication(options =>
     .AddIdentityCookies();
 builder.Services.AddAuthorization();
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
@@ -76,7 +115,19 @@ app.MapRazorComponents<App>()
 // Add additional endpoints required by the Identity /Account Razor components.
 app.MapAdditionalIdentityEndpoints();
 
-app.Run();
+try
+{
+    Log.Information("アプリケーションを起動します");
+    app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "アプリケーションの起動中に致命的なエラーが発生しました");
+}
+finally
+{
+    Log.CloseAndFlush();
+}
 
 /// <summary>
 /// Admin/User ロールが存在しない場合に作成して、アプリに必要なロールを初期化する。
