@@ -12,7 +12,7 @@
             <MudStack Spacing="2">
                 <MudStack Spacing="1">
                     <MudText Typo="Typo.h5">優待商品マスタ登録</MudText>
-                    <MudText Typo="Typo.body2" Color="Color.TextSecondary">
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
                         優待商品コードと必要ポイントを入力して商品を登録します。
                     </MudText>
                 </MudStack>
@@ -75,7 +75,7 @@
                                              Variant="Variant.Text" />
                         </MudItem>
                         <MudItem xs="12" md="6">
-                            <MudSwitch @bind-Checked="_formModel.IsActive" Color="Color.Primary" Label="公開する" />
+                            <MudSwitch T="bool" @bind-Checked="_formModel.IsActive" Color="Color.Primary" Label="公開する" />
                         </MudItem>
                     </MudGrid>
 
@@ -105,10 +105,10 @@
     <MudItem xs="12" md="4">
         <MudPaper Class="pa-4" Elevation="1">
             <MudText Typo="Typo.h6" Class="mb-2">登録のポイント</MudText>
-            <MudList Dense="true">
-                <MudListItem>商品コードは既存のコードと重複しないようにしてください。</MudListItem>
-                <MudListItem>必要ポイントは 1 以上の整数で入力します。</MudListItem>
-                <MudListItem>公開設定をオフにすると株主画面に表示されません。</MudListItem>
+            <MudList T="string" Dense="true">
+                <MudListItem T="string">商品コードは既存のコードと重複しないようにしてください。</MudListItem>
+                <MudListItem T="string">必要ポイントは 1 以上の整数で入力します。</MudListItem>
+                <MudListItem T="string">公開設定をオフにすると株主画面に表示されません。</MudListItem>
             </MudList>
         </MudPaper>
 
@@ -117,13 +117,13 @@
             <MudPaper Class="pa-4 mt-4" Elevation="1">
                 <MudText Typo="Typo.h6" Class="mb-2">登録完了</MudText>
                 <MudText Typo="Typo.subtitle2" Color="Color.Primary">@_createdItem.ItemName</MudText>
-                <MudText Typo="Typo.body2" Color="Color.TextSecondary">コード: @_createdItem.ItemCode</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">コード: @_createdItem.ItemCode</MudText>
                 <MudDivider Class="my-2" />
                 <MudStack Spacing="1">
                     <MudText Typo="Typo.body2">必要ポイント: @_createdItem.RequiredPoints</MudText>
                     <MudText Typo="Typo.body2">表示順: @_createdItem.DisplayOrder</MudText>
                     <MudText Typo="Typo.body2">状態: @(_createdItem.IsActive ? "公開" : "非公開")</MudText>
-                    <MudText Typo="Typo.caption" Color="Color.TextSecondary">登録日時 (UTC): @_createdItem.CreatedAt.ToString("yyyy/MM/dd HH:mm")</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">登録日時 (UTC): @_createdItem.CreatedAt.ToString("yyyy/MM/dd HH:mm")</MudText>
                 </MudStack>
             </MudPaper>
         }
