@@ -1,9 +1,7 @@
 using Admin.Client.Models;
 using Admin.Data;
-//using Admin.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Shared.Entities;
 
 namespace Admin.Controllers;
@@ -13,19 +11,19 @@ namespace Admin.Controllers;
 [Authorize(Roles = ApplicationRoles.Admin)]
 public class RewardItemsController : ControllerBase
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<RewardItemsController> _logger;
 
-    public RewardItemsController(ApplicationDbContext context, ILogger<RewardItemsController> logger)
+    public RewardItemsController(IUnitOfWork unitOfWork, ILogger<RewardItemsController> logger)
     {
-        _context = context;
+        _unitOfWork = unitOfWork;
         _logger = logger;
     }
 
     [HttpGet("{id:int}")]
     public async Task<ActionResult<RewardItem>> GetById(int id)
     {
-        var item = await _context.RewardItems.FindAsync(id);
+        var item = await _unitOfWork.RewardItems.GetByIdAsync(id);
         if (item is null)
         {
             return NotFound();
@@ -37,7 +35,7 @@ public class RewardItemsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<RewardItem>> Create([FromBody] CreateRewardItemInput request)
     {
-        if (await _context.RewardItems.AnyAsync(x => x.ItemCode == request.ItemCode))
+        if (await _unitOfWork.RewardItems.ExistsByItemCodeAsync(request.ItemCode))
         {
             ModelState.AddModelError(nameof(request.ItemCode), "同じ商品コードが既に登録されています。");
             return ValidationProblem(ModelState);
@@ -56,8 +54,8 @@ public class RewardItemsController : ControllerBase
             UpdatedAt = now
         };
 
-        _context.RewardItems.Add(entity);
-        await _context.SaveChangesAsync();
+        await _unitOfWork.RewardItems.AddAsync(entity);
+        await _unitOfWork.SaveChangesAsync();
 
         _logger.LogInformation("優待商品を登録しました (ItemId: {ItemId}, ItemCode: {ItemCode})", entity.ItemId, entity.ItemCode);
 
