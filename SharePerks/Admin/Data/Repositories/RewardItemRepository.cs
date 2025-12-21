@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Shared.Entities;
 
 namespace Admin.Data.Repositories;
@@ -21,17 +22,17 @@ public class RewardItemRepository : GenericRepository<RewardItem>, IRewardItemRe
         return DbSet.AnyAsync(x => x.ItemCode == itemCode, cancellationToken);
     }
 
-    public ValueTask AddAsync(RewardItem rewardItem, CancellationToken cancellationToken = default)
+    public override ValueTask<EntityEntry<RewardItem>> AddAsync(RewardItem rewardItem, CancellationToken cancellationToken = default)
     {
         return base.AddAsync(rewardItem, cancellationToken);
     }
 
-    public void Update(RewardItem rewardItem)
+    public override void Update(RewardItem rewardItem)
     {
         base.Update(rewardItem);
     }
 
-    public void Remove(RewardItem rewardItem)
+    public override void Remove(RewardItem rewardItem)
     {
         base.Remove(rewardItem);
     }

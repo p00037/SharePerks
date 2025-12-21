@@ -43,24 +43,25 @@ public abstract class GenericRepository<TEntity> where TEntity : class
         return query.AsNoTracking().ToListAsync();
     }
 
-    protected Task<TEntity?> GetByIdAsync(object id, CancellationToken cancellationToken = default)
+    protected virtual Task<TEntity?> GetByIdAsync(object id, CancellationToken cancellationToken = default)
     {
         return DbSet.FindAsync(new[] { id }, cancellationToken).AsTask();
     }
 
-    protected ValueTask<EntityEntry<TEntity>> AddAsync(TEntity entity, CancellationToken cancellationToken = default)
+    public virtual ValueTask<EntityEntry<TEntity>> AddAsync(TEntity entity, CancellationToken cancellationToken = default)
     {
         return DbSet.AddAsync(entity, cancellationToken);
     }
 
-    protected void Update(TEntity entity)
+    public virtual void Update(TEntity entity)
     {
         DbSet.Attach(entity);
         _context.Entry(entity).State = EntityState.Modified;
     }
 
-    protected void Remove(TEntity entity)
+    public virtual void Remove(TEntity entity)
     {
         DbSet.Remove(entity);
+
     }
 }

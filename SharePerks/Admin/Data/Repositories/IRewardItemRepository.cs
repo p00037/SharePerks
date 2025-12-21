@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Shared.Entities;
 
 namespace Admin.Data.Repositories;
@@ -8,7 +9,7 @@ public interface IRewardItemRepository
 
     Task<bool> ExistsByItemCodeAsync(string itemCode, CancellationToken cancellationToken = default);
 
-    ValueTask AddAsync(RewardItem rewardItem, CancellationToken cancellationToken = default);
+    ValueTask<EntityEntry<RewardItem>> AddAsync(RewardItem rewardItem, CancellationToken cancellationToken = default);
 
     void Update(RewardItem rewardItem);
 
