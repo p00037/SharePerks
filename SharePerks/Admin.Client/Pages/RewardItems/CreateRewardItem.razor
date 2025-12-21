@@ -1,4 +1,5 @@
 @page "/reward-items/new"
+@using Admin.Client.Helpers
 
 @inject RewardItemApiClient ApiClient
 @inject ISnackbar Snackbar
@@ -32,7 +33,7 @@
                         <MudItem xs="12" md="6">
                             <MudTextField @bind-Value="_formModel.ItemCode"
                                           For="@(() => _formModel.ItemCode)"
-                                          Label="商品コード"
+                                          Label="@(PageHelper.DisplayNameFor(() => _formModel.ItemCode))"
                                           Required="true"
                                           Immediate="true"
                                           Autocomplete="On"
@@ -41,7 +42,7 @@
                         <MudItem xs="12" md="6">
                             <MudTextField @bind-Value="_formModel.ItemName"
                                           For="@(() => _formModel.ItemName)"
-                                          Label="商品名"
+                                          Label="@(PageHelper.DisplayNameFor(() => _formModel.ItemName))"
                                           Required="true"
                                           Immediate="true"
                                           Autocomplete="On"
@@ -50,7 +51,7 @@
                         <MudItem xs="12">
                             <MudTextField @bind-Value="_formModel.ItemDescription"
                                           For="@(() => _formModel.ItemDescription)"
-                                          Label="商品説明"
+                                          Label="@(PageHelper.DisplayNameFor(() => _formModel.ItemDescription))"
                                           Lines="3"
                                           MaxLength="1000"
                                           Placeholder="内容や注意事項を入力してください。"
@@ -60,7 +61,7 @@
                         <MudItem xs="12" md="6">
                             <MudNumericField @bind-Value="_formModel.RequiredPoints"
                                              For="@(() => _formModel.RequiredPoints)"
-                                             Label="必要ポイント"
+                                             Label="@(PageHelper.DisplayNameFor(() => _formModel.RequiredPoints))"
                                              Min="1"
                                              Required="true"
                                              Immediate="true"
@@ -69,13 +70,13 @@
                         <MudItem xs="12" md="6">
                             <MudNumericField @bind-Value="_formModel.DisplayOrder"
                                              For="@(() => _formModel.DisplayOrder)"
-                                             Label="表示順"
+                                             Label="@(PageHelper.DisplayNameFor(() => _formModel.DisplayOrder))"
                                              Min="0"
                                              Immediate="true"
                                              Variant="Variant.Text" />
                         </MudItem>
                         <MudItem xs="12" md="6">
-                            <MudSwitch T="bool" @bind-Checked="_formModel.IsActive" Color="Color.Primary" Label="公開する" />
+                            <MudSwitch T="bool" @bind-Checked="_formModel.IsActive" Color="Color.Primary" Label="@(PageHelper.DisplayNameFor(() => _formModel.IsActive))" />
                         </MudItem>
                     </MudGrid>
 

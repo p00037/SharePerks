@@ -34,7 +34,8 @@ public class RewardItemApiClient
             var problem = await response.Content.ReadFromJsonAsync<ValidationProblemDetailsResponse>(cancellationToken: cancellationToken);
             if (problem is not null)
             {
-                throw new RewardItemValidationException(problem.Title ?? "入力内容に問題があります。", new ReadOnlyDictionary<string, string[]>(problem.Errors));
+                //throw new RewardItemValidationException(problem.Title ?? "入力内容に問題があります。", new ReadOnlyDictionary<string, string[]>(problem.Errors));
+                throw new RewardItemValidationException("入力内容に問題があります。", new ReadOnlyDictionary<string, string[]>(problem.Errors));
             }
         }
 

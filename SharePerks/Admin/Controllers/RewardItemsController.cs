@@ -1,5 +1,6 @@
+using Admin.Client.Models;
 using Admin.Data;
-using Admin.Models;
+//using Admin.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -34,7 +35,7 @@ public class RewardItemsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<RewardItem>> Create([FromBody] CreateRewardItemRequest request)
+    public async Task<ActionResult<RewardItem>> Create([FromBody] CreateRewardItemInput request)
     {
         if (await _context.RewardItems.AnyAsync(x => x.ItemCode == request.ItemCode))
         {
