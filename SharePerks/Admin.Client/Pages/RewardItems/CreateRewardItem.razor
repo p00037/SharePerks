@@ -1,0 +1,242 @@
+@page "/reward-items/new"
+@using Admin.Client.Helpers
+
+@inject RewardItemApiClient ApiClient
+@inject ISnackbar Snackbar
+@implements IDisposable
+
+<PageTitle>優待商品登録</PageTitle>
+
+<MudGrid Class="mb-6">
+    <MudItem xs="12" md="8">
+        <MudPaper Class="pa-6" Elevation="1">
+            <MudStack Spacing="2">
+                <MudStack Spacing="1">
+                    <MudText Typo="Typo.h5">優待商品マスタ登録</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        優待商品コードと必要ポイントを入力して商品を登録します。
+                    </MudText>
+                </MudStack>
+
+                @if (!string.IsNullOrWhiteSpace(_serverErrorMessage))
+                {
+                    <MudAlert Severity="Severity.Error" Variant="Variant.Filled">
+                        @_serverErrorMessage
+                    </MudAlert>
+                }
+
+                <EditForm EditContext="_editContext" OnValidSubmit="HandleValidSubmit">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <MudGrid>
+                        <MudItem xs="12" md="6">
+                            <MudTextField @bind-Value="_formModel.ItemCode"
+                                          For="@(() => _formModel.ItemCode)"
+                                          Label="@(PageHelper.DisplayNameFor(() => _formModel.ItemCode))"
+                                          Required="true"
+                                          Immediate="true"
+                                          Autocomplete="On"
+                                          MaxLength="100" />
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudTextField @bind-Value="_formModel.ItemName"
+                                          For="@(() => _formModel.ItemName)"
+                                          Label="@(PageHelper.DisplayNameFor(() => _formModel.ItemName))"
+                                          Required="true"
+                                          Immediate="true"
+                                          Autocomplete="On"
+                                          MaxLength="200" />
+                        </MudItem>
+                        <MudItem xs="12">
+                            <MudTextField @bind-Value="_formModel.ItemDescription"
+                                          For="@(() => _formModel.ItemDescription)"
+                                          Label="@(PageHelper.DisplayNameFor(() => _formModel.ItemDescription))"
+                                          Lines="3"
+                                          MaxLength="1000"
+                                          Placeholder="内容や注意事項を入力してください。"
+                                          Autocomplete="On"
+                                          Immediate="true" />
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudNumericField @bind-Value="_formModel.RequiredPoints"
+                                             For="@(() => _formModel.RequiredPoints)"
+                                             Label="@(PageHelper.DisplayNameFor(() => _formModel.RequiredPoints))"
+                                             Min="1"
+                                             Required="true"
+                                             Immediate="true"
+                                             Variant="Variant.Text" />
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudNumericField @bind-Value="_formModel.DisplayOrder"
+                                             For="@(() => _formModel.DisplayOrder)"
+                                             Label="@(PageHelper.DisplayNameFor(() => _formModel.DisplayOrder))"
+                                             Min="0"
+                                             Immediate="true"
+                                             Variant="Variant.Text" />
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudSwitch T="bool" @bind-Checked="_formModel.IsActive" Color="Color.Primary" Label="@(PageHelper.DisplayNameFor(() => _formModel.IsActive))" />
+                        </MudItem>
+                    </MudGrid>
+
+                    <MudStack Row="true" Spacing="2" Class="mt-4">
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   ButtonType="ButtonType.Submit"
+                                   Disabled="_isSubmitting">
+                            @if (_isSubmitting)
+                            {
+                                <MudProgressCircular Indeterminate="true" Size="Size.Small" Class="mr-2" />
+                            }
+                            登録する
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Secondary"
+                                   OnClick="ResetForm"
+                                   Disabled="_isSubmitting">
+                            入力をクリア
+                        </MudButton>
+                    </MudStack>
+                </EditForm>
+            </MudStack>
+        </MudPaper>
+    </MudItem>
+
+    <MudItem xs="12" md="4">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudText Typo="Typo.h6" Class="mb-2">登録のポイント</MudText>
+            <MudList T="string" Dense="true">
+                <MudListItem T="string">商品コードは既存のコードと重複しないようにしてください。</MudListItem>
+                <MudListItem T="string">必要ポイントは 1 以上の整数で入力します。</MudListItem>
+                <MudListItem T="string">公開設定をオフにすると株主画面に表示されません。</MudListItem>
+            </MudList>
+        </MudPaper>
+
+        @if (_createdItem is not null)
+        {
+            <MudPaper Class="pa-4 mt-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">登録完了</MudText>
+                <MudText Typo="Typo.subtitle2" Color="Color.Primary">@_createdItem.ItemName</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">コード: @_createdItem.ItemCode</MudText>
+                <MudDivider Class="my-2" />
+                <MudStack Spacing="1">
+                    <MudText Typo="Typo.body2">必要ポイント: @_createdItem.RequiredPoints</MudText>
+                    <MudText Typo="Typo.body2">表示順: @_createdItem.DisplayOrder</MudText>
+                    <MudText Typo="Typo.body2">状態: @(_createdItem.IsActive ? "公開" : "非公開")</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">登録日時 (UTC): @_createdItem.CreatedAt.ToString("yyyy/MM/dd HH:mm")</MudText>
+                </MudStack>
+            </MudPaper>
+        }
+    </MudItem>
+</MudGrid>
+
+@code {
+    private CreateRewardItemInput _formModel = new();
+    private RewardItemResponse? _createdItem;
+    private EditContext? _editContext;
+    private ValidationMessageStore? _messageStore;
+    private bool _isSubmitting;
+    private string? _serverErrorMessage;
+
+    protected override void OnInitialized()
+    {
+        InitializeEditContext();
+    }
+
+    private void InitializeEditContext()
+    {
+        if (_editContext is not null)
+        {
+            _editContext.OnValidationRequested -= HandleValidationRequested;
+            _editContext.OnFieldChanged -= HandleFieldChanged;
+        }
+
+        _formModel = new CreateRewardItemInput();
+        _editContext = new EditContext(_formModel);
+        _messageStore = new ValidationMessageStore(_editContext);
+        _editContext.OnValidationRequested += HandleValidationRequested;
+        _editContext.OnFieldChanged += HandleFieldChanged;
+    }
+
+    private void HandleValidationRequested(object? sender, ValidationRequestedEventArgs e)
+    {
+        _messageStore?.Clear();
+        _serverErrorMessage = null;
+    }
+
+    private void HandleFieldChanged(object? sender, FieldChangedEventArgs e)
+    {
+        _messageStore?.Clear(e.FieldIdentifier);
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (_editContext is null)
+        {
+            return;
+        }
+
+        _isSubmitting = true;
+        _serverErrorMessage = null;
+
+        try
+        {
+            var created = await ApiClient.CreateAsync(_formModel);
+            _createdItem = created;
+            Snackbar.Add($"優待商品『{created.ItemName}』を登録しました。", Severity.Success);
+            InitializeEditContext();
+        }
+        catch (RewardItemValidationException ex)
+        {
+            ApplyServerValidationErrors(ex.Errors);
+            _serverErrorMessage = ex.Message;
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            _serverErrorMessage = "優待商品の登録に失敗しました。もう一度お試しください。";
+            Snackbar.Add(_serverErrorMessage, Severity.Error);
+            Console.Error.WriteLine(ex);
+        }
+        finally
+        {
+            _isSubmitting = false;
+        }
+    }
+
+    private void ApplyServerValidationErrors(IReadOnlyDictionary<string, string[]> errors)
+    {
+        if (_editContext is null || _messageStore is null)
+        {
+            return;
+        }
+
+        _messageStore.Clear();
+
+        foreach (var (fieldName, messages) in errors)
+        {
+            var identifier = new FieldIdentifier(_editContext.Model, fieldName);
+            _messageStore.Add(identifier, messages);
+        }
+
+        _editContext.NotifyValidationStateChanged();
+    }
+
+    private void ResetForm()
+    {
+        InitializeEditContext();
+        _serverErrorMessage = null;
+    }
+
+    public void Dispose()
+    {
+        if (_editContext is null)
+        {
+            return;
+        }
+
+        _editContext.OnValidationRequested -= HandleValidationRequested;
+        _editContext.OnFieldChanged -= HandleFieldChanged;
+    }
+}
