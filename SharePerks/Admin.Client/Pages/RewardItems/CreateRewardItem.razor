@@ -1,7 +1,11 @@
 @page "/reward-items/new"
 @using Admin.Client.Helpers
+@using Admin.Client.Services.Api
+@using Admin.Client.Services.Api.Exceptions
+@using Admin.Client.Services.Api.Interface
+@using Shared.Entities
 
-@inject RewardItemApiClient ApiClient
+@inject IRewardItemApiClient ApiClient
 @inject ISnackbar Snackbar
 @implements IDisposable
 
@@ -133,7 +137,7 @@
 
 @code {
     private CreateRewardItemInput _formModel = new();
-    private RewardItemResponse? _createdItem;
+    private RewardItem? _createdItem;
     private EditContext? _editContext;
     private ValidationMessageStore? _messageStore;
     private bool _isSubmitting;
@@ -187,7 +191,7 @@
             Snackbar.Add($"優待商品『{created.ItemName}』を登録しました。", Severity.Success);
             InitializeEditContext();
         }
-        catch (RewardItemValidationException ex)
+        catch (ApiValidationException ex)
         {
             ApplyServerValidationErrors(ex.Errors);
             _serverErrorMessage = ex.Message;
