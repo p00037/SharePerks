@@ -1,4 +1,5 @@
 @page "/reward-items/new"
+@using Admin.Client.Components
 @using Admin.Client.Helpers
 @using Admin.Client.Services.Api
 @using Admin.Client.Services.Api.Exceptions
@@ -7,6 +8,7 @@
 
 @inject IRewardItemApiClient ApiClient
 @inject ISnackbar Snackbar
+@inherits FormComponentBase<CreateRewardItemInput>
 @implements IDisposable
 
 <PageTitle>優待商品登録</PageTitle>
@@ -88,8 +90,8 @@
                         <MudButton Variant="Variant.Filled"
                                    Color="Color.Primary"
                                    ButtonType="ButtonType.Submit"
-                                   Disabled="_isSubmitting">
-                            @if (_isSubmitting)
+                                   Disabled="IsRun">
+                            @if (IsRun)
                             {
                                 <MudProgressCircular Indeterminate="true" Size="Size.Small" Class="mr-2" />
                             }
@@ -98,7 +100,7 @@
                         <MudButton Variant="Variant.Outlined"
                                    Color="Color.Secondary"
                                    OnClick="ResetForm"
-                                   Disabled="_isSubmitting">
+                                   Disabled="IsRun">
                             入力をクリア
                         </MudButton>
                     </MudStack>
@@ -136,111 +138,29 @@
 </MudGrid>
 
 @code {
-    private CreateRewardItemInput _formModel = new();
     private RewardItem? _createdItem;
-    private EditContext? _editContext;
-    private ValidationMessageStore? _messageStore;
-    private bool _isSubmitting;
-    private string? _serverErrorMessage;
 
-    protected override void OnInitialized()
+    private Task HandleValidSubmit() => RunAsync(ValidSubmit);
+    
+
+    protected override async Task OnInitializedAsync()
     {
-        InitializeEditContext();
+        await Run(() => {
+            base.InitializeEditContext(new CreateRewardItemInput());
+        });
     }
 
-    private void InitializeEditContext()
+    private async Task ValidSubmit()
     {
-        if (_editContext is not null)
-        {
-            _editContext.OnValidationRequested -= HandleValidationRequested;
-            _editContext.OnFieldChanged -= HandleFieldChanged;
-        }
-
-        _formModel = new CreateRewardItemInput();
-        _editContext = new EditContext(_formModel);
-        _messageStore = new ValidationMessageStore(_editContext);
-        _editContext.OnValidationRequested += HandleValidationRequested;
-        _editContext.OnFieldChanged += HandleFieldChanged;
-    }
-
-    private void HandleValidationRequested(object? sender, ValidationRequestedEventArgs e)
-    {
-        _messageStore?.Clear();
-        _serverErrorMessage = null;
-    }
-
-    private void HandleFieldChanged(object? sender, FieldChangedEventArgs e)
-    {
-        _messageStore?.Clear(e.FieldIdentifier);
-    }
-
-    private async Task HandleValidSubmit()
-    {
-        if (_editContext is null)
-        {
-            return;
-        }
-
-        _isSubmitting = true;
-        _serverErrorMessage = null;
-
-        try
-        {
-            var created = await ApiClient.CreateAsync(_formModel);
-            _createdItem = created;
-            Snackbar.Add($"優待商品『{created.ItemName}』を登録しました。", Severity.Success);
-            InitializeEditContext();
-        }
-        catch (ApiValidationException ex)
-        {
-            ApplyServerValidationErrors(ex.Errors);
-            _serverErrorMessage = ex.Message;
-            Snackbar.Add(ex.Message, Severity.Error);
-        }
-        catch (Exception ex)
-        {
-            _serverErrorMessage = "優待商品の登録に失敗しました。もう一度お試しください。";
-            Snackbar.Add(_serverErrorMessage, Severity.Error);
-            Console.Error.WriteLine(ex);
-        }
-        finally
-        {
-            _isSubmitting = false;
-        }
-    }
-
-    private void ApplyServerValidationErrors(IReadOnlyDictionary<string, string[]> errors)
-    {
-        if (_editContext is null || _messageStore is null)
-        {
-            return;
-        }
-
-        _messageStore.Clear();
-
-        foreach (var (fieldName, messages) in errors)
-        {
-            var identifier = new FieldIdentifier(_editContext.Model, fieldName);
-            _messageStore.Add(identifier, messages);
-        }
-
-        _editContext.NotifyValidationStateChanged();
+        var created = await ApiClient.CreateAsync(_formModel);
+        _createdItem = created;
+        Snackbar.Add($"優待商品『{created.ItemName}』を登録しました。", Severity.Success);
+        InitializeEditContext(new CreateRewardItemInput());
     }
 
     private void ResetForm()
     {
-        InitializeEditContext();
+        InitializeEditContext(new CreateRewardItemInput());
         _serverErrorMessage = null;
-    }
-
-    public void Dispose()
-    {
-        if (_editContext is null)
-        {
-            return;
-        }
-
-        _editContext.OnValidationRequested -= HandleValidationRequested;
-        _editContext.OnFieldChanged -= HandleFieldChanged;
     }
 }
