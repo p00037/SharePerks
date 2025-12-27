@@ -1,19 +1,20 @@
 ﻿using System.Text;
+using Admin.Client.Services;
 using Admin.Client.Services.Api.Exceptions;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
+using static MudBlazor.CategoryTypes;
 
 namespace Admin.Client.Components
 {
-    public abstract class FormComponentBase<TModel> : ComponentBase, IDisposable where TModel : class, new()
+    public abstract class FormComponentBase<TModel> : Microsoft.AspNetCore.Components.ComponentBase, IDisposable where TModel : class, new()
     {
+        [Inject] public OverlayState Overlay { get;  set; } = default!;
+
         protected TModel _formModel = new();
         protected EditContext? _editContext;
         protected ValidationMessageStore? _messageStore;
         protected string? _serverErrorMessage;
-        private bool _isRun = false;
-
-        protected bool IsRun => _isRun;
 
         protected void InitializeEditContext(TModel formModel)
         {
@@ -28,6 +29,7 @@ namespace Admin.Client.Components
             _messageStore = new ValidationMessageStore(_editContext);
             _editContext.OnValidationRequested += HandleValidationRequested;
             _editContext.OnFieldChanged += HandleFieldChanged;
+            Overlay.OnChange += OnOverlayChanged;
         }
 
         private void HandleValidationRequested(object? sender, ValidationRequestedEventArgs e)
@@ -41,17 +43,22 @@ namespace Admin.Client.Components
             _messageStore?.Clear(e.FieldIdentifier);
         }
 
-        protected async Task RunAsync(Func<Task> onValidSubmit)
+        private void OnOverlayChanged()
         {
-            if (_isRun)
+            InvokeAsync(StateHasChanged);
+        }
+
+        protected async Task RunAsync(Func<Task> func, string dafaultErrorMessage = "処理に失敗しました。もう一度お試しください")
+        {
+            if (Overlay.Visible)
             {
                 return;
             }
 
             try
             {
-                _isRun = true;
-                await onValidSubmit();
+                Overlay.Show();
+                await func();
             }
             catch (ApiValidationException ex)
             {
@@ -60,12 +67,12 @@ namespace Admin.Client.Components
             }
             catch (Exception ex)
             {
-                _serverErrorMessage = "フォームの送信に失敗しました。もう一度お試しください。";
+                _serverErrorMessage = dafaultErrorMessage;
                 Console.Error.WriteLine(ex);
             }
             finally
             {
-                _isRun = false;
+                Overlay.Hide();
                 StateHasChanged();
             }
         }
@@ -97,7 +104,7 @@ namespace Admin.Client.Components
             _editContext.NotifyValidationStateChanged();
         }
 
-        private void ResetForm()
+        protected void ResetForm()
         {
             InitializeEditContext(new TModel());
             _serverErrorMessage = null;
@@ -112,6 +119,7 @@ namespace Admin.Client.Components
 
             _editContext.OnValidationRequested -= HandleValidationRequested;
             _editContext.OnFieldChanged -= HandleFieldChanged;
+            Overlay.OnChange -= OnOverlayChanged;
         }
     }
 }
