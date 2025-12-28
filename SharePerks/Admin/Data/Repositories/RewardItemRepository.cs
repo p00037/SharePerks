@@ -10,6 +10,12 @@ public class RewardItemRepository : GenericRepository<RewardItem>, IRewardItemRe
     {
     }
 
+    public Task<List<RewardItem>> ListAsync(CancellationToken cancellationToken = default)
+    {
+        return GetAsync(
+            orderBy: query => query.OrderBy(item => item.DisplayOrder).ThenBy(item => item.ItemCode));
+    }
+
     public async Task<RewardItem?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         return await DbSet
@@ -17,9 +23,11 @@ public class RewardItemRepository : GenericRepository<RewardItem>, IRewardItemRe
             .FirstOrDefaultAsync(x => x.ItemId == id, cancellationToken);
     }
 
-    public Task<bool> ExistsByItemCodeAsync(string itemCode, CancellationToken cancellationToken = default)
+    public Task<bool> ExistsByItemCodeAsync(string itemCode, int? excludeItemId = null, CancellationToken cancellationToken = default)
     {
-        return DbSet.AnyAsync(x => x.ItemCode == itemCode, cancellationToken);
+        return DbSet.AnyAsync(
+            x => x.ItemCode == itemCode && (!excludeItemId.HasValue || x.ItemId != excludeItemId.Value),
+            cancellationToken);
     }
 
     public override ValueTask<EntityEntry<RewardItem>> AddAsync(RewardItem rewardItem, CancellationToken cancellationToken = default)

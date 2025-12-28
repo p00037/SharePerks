@@ -24,7 +24,7 @@ namespace Admin.Client.Components
                 _editContext.OnFieldChanged -= HandleFieldChanged;
             }
 
-            _formModel = new();
+            _formModel = formModel;
             _editContext = new EditContext(_formModel);
             _messageStore = new ValidationMessageStore(_editContext);
             _editContext.OnValidationRequested += HandleValidationRequested;
@@ -104,7 +104,7 @@ namespace Admin.Client.Components
             _editContext.NotifyValidationStateChanged();
         }
 
-        protected Task ResetForm()
+        protected virtual Task ResetForm()
         {
             InitializeEditContext(new TModel());
             _serverErrorMessage = null;
