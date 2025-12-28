@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Data;
 using Admin.Client.Pages;
+using Admin.Client.Services;
 using Admin.Components;
 using Admin.Components.Account;
 using Admin.Data;
@@ -12,6 +13,9 @@ using Serilog;
 using Serilog.Sinks.MSSqlServer;
 
 var builder = WebApplication.CreateBuilder(args);
+
+//Overlayサービス
+builder.Services.AddScoped<OverlayState>();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
