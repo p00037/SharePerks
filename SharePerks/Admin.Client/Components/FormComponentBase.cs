@@ -7,7 +7,7 @@ using static MudBlazor.CategoryTypes;
 
 namespace Admin.Client.Components
 {
-    public abstract class FormComponentBase<TModel> : Microsoft.AspNetCore.Components.ComponentBase, IDisposable where TModel : class, new()
+    public abstract class FormComponentBase<TModel> :Microsoft.AspNetCore.Components.ComponentBase, IDisposable where TModel : class, new()
     {
         [Inject] public OverlayState Overlay { get;  set; } = default!;
 
@@ -104,10 +104,11 @@ namespace Admin.Client.Components
             _editContext.NotifyValidationStateChanged();
         }
 
-        protected void ResetForm()
+        protected Task ResetForm()
         {
             InitializeEditContext(new TModel());
             _serverErrorMessage = null;
+            return Task.CompletedTask;
         }
 
         public void Dispose()

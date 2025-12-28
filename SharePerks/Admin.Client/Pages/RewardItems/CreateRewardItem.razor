@@ -1,32 +1,17 @@
 @page "/reward-items/new"
 @using Admin.Client.Components
 @using Admin.Client.Helpers
-@using Admin.Client.Services.Api
-@using Admin.Client.Services.Api.Exceptions
-@using Admin.Client.Services.Api.Interface
-@using Shared.Entities
 
-@inject IRewardItemApiClient ApiClient
-@inject ISnackbar Snackbar
 @inherits FormComponentBase<CreateRewardItemInput>
-@implements IDisposable
 
 <PageTitle>優待商品登録</PageTitle>
 
-@* <MudOverlay Visible="@Overlay.Visible" DarkBackground>
-    <MudProgressCircular Indeterminate="true" Size="Size.Large" Class="mr-2" />
-</MudOverlay> *@
-
-
 <MudGrid Class="mb-6">
-    
 
     <MudItem xs="12" md="8">
         <MudPaper Class="pa-6" Elevation="1">
             <MudStack Spacing="2">
                 <MudStack Spacing="1">
-                    <MudText Typo="Typo.h5">@Overlay.GetHashCode()</MudText>
-                    <MudText Color="Color.Info" Typo="Typo.h5">@Overlay.Visible.ToString()</MudText>
                     <MudText Typo="Typo.h5">優待商品マスタ登録</MudText>
                     <MudText Typo="Typo.body2" Color="Color.Secondary">
                         優待商品コードと必要ポイントを入力して商品を登録します。
@@ -103,7 +88,7 @@
                         </MudButton>
                         <MudButton Variant="Variant.Outlined"
                                    Color="Color.Secondary"
-                                   OnClick="ResetForm">
+                                   OnClick="HandleResetForm">
                             入力をクリア
                         </MudButton>
                     </MudStack>
@@ -139,31 +124,3 @@
         }
     </MudItem>
 </MudGrid>
-
-@code {
-    private RewardItem? _createdItem;
-
-    private Task HandleValidSubmit() => RunAsync(ValidSubmit,"登録に失敗しました。もう一度実行してください");
-    
-
-    protected override async Task OnInitializedAsync()
-    {
-        await Run(() => {
-            base.InitializeEditContext(new CreateRewardItemInput());
-        });
-    }
-
-    private async Task ValidSubmit()
-    {
-        var created = await ApiClient.CreateAsync(_formModel);
-        _createdItem = created;
-        Snackbar.Add($"優待商品『{created.ItemName}』を登録しました。", Severity.Success);
-        InitializeEditContext(new CreateRewardItemInput());
-    }
-
-    private void ResetForm()
-    {
-        InitializeEditContext(new CreateRewardItemInput());
-        _serverErrorMessage = null;
-    }
-}
