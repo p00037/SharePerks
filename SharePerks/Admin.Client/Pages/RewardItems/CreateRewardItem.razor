@@ -11,13 +11,15 @@
 
     <MudItem xs="12" md="8">
         <MudPaper Class="pa-6" Elevation="1">
-            <MudStack Spacing="2">
-                <MudStack Spacing="1">
+            @*             <MudStack Spacing="2">
+                <MudStack Spacing="1"> *@
+            <MudStack>
+                <MudStack>
                     <MudText Typo="Typo.h5">@(_isEdit ? "優待商品マスタ編集" : "優待商品マスタ登録")</MudText>
                     <MudText Typo="Typo.body2" Color="Color.Secondary">
                         @(_isEdit
-                            ? "優待商品の情報を編集して更新します。"
-                            : "優待商品コードと必要ポイントを入力して商品を登録します。")
+                                                ? "優待商品の情報を編集して更新します。"
+                                                : "優待商品コードと必要ポイントを入力して商品を登録します。")
                     </MudText>
                 </MudStack>
 
@@ -79,7 +81,7 @@
                                              Variant="Variant.Text" />
                         </MudItem>
                         <MudItem xs="12" md="6">
-                            <MudSwitch T="bool" @bind-Checked="_formModel.IsActive" Color="Color.Primary" Label="@(PageHelper.DisplayNameFor(() => _formModel.IsActive))" />
+                            <MudSwitch @bind-Value="_formModel.IsActive" Color="Color.Primary" Label="@(PageHelper.DisplayNameFor(() => _formModel.IsActive))" />
                         </MudItem>
                     </MudGrid>
 

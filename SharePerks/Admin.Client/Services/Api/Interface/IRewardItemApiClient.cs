@@ -5,7 +5,7 @@ namespace Admin.Client.Services.Api.Interface
 {
 public interface IRewardItemApiClient
 {
-    Task<IReadOnlyList<RewardItem>> ListAsync(CancellationToken cancellationToken = default);
+    Task<List<RewardItem>> ListAsync(CancellationToken cancellationToken = default);
     Task<RewardItem> GetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<RewardItem> CreateAsync(
         CreateRewardItemInput input,

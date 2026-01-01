@@ -1,3 +1,4 @@
+using Admin.Client.Models;
 using Admin.Client.Services.Api.Interface;
 using Microsoft.AspNetCore.Components;
 using Shared.Entities;
@@ -8,20 +9,12 @@ public partial class RewardItemList
 {
     [Inject] public IRewardItemApiClient ApiClient { get; set; } = default!;
 
-    private List<RewardItem>? _items;
-    private string? _errorMessage;
-
     protected override async Task OnInitializedAsync()
     {
-        try
+        await RunAsync(async () =>
         {
             var items = await ApiClient.ListAsync();
-            _items = items.ToList();
-        }
-        catch (Exception ex)
-        {
-            _errorMessage = "優待商品一覧の取得に失敗しました。";
-            Console.Error.WriteLine(ex);
-        }
+            InitializeEditContext(items);
+        }, "優待商品一覧の取得に失敗しました。");
     }
 }

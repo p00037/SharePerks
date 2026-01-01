@@ -62,16 +62,9 @@ namespace Admin.Client.Pages.RewardItems
                 return;
             }
 
-            try
-            {
-                var item = await ApiClient.GetByIdAsync(ItemId.Value);
-                _loadedItem = item;
-                base.InitializeEditContext(ToInputModel(item));
-            }
-            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
-            {
-                _serverErrorMessage = "対象の優待商品が見つかりません。";
-            }
+            var item = await ApiClient.GetByIdAsync(ItemId.Value);
+            _loadedItem = item;
+            base.InitializeEditContext(ToInputModel(item));
         }
 
         protected override Task ResetForm()

@@ -1,0 +1,21 @@
+﻿.mud-table-head .mud-table-cell {
+    text-align: center;
+}
+
+.mud-table-head .mud-table-cell {
+    border-right: 1px solid var(--mud-palette-lines-default);
+    border-bottom: 1px solid var(--mud-palette-lines-default);
+}
+
+    .mud-table-head .mud-table-cell:last-child {
+        border-right: none;
+    }
+
+
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}

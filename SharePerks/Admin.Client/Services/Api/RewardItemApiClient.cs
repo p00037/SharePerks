@@ -10,9 +10,9 @@ public class RewardItemApiClient: ApiClientBase, IRewardItemApiClient
     {
     }
 
-    public Task<IReadOnlyList<RewardItem>> ListAsync(CancellationToken cancellationToken = default)
+    public Task<List<RewardItem>> ListAsync(CancellationToken cancellationToken = default)
     {
-        return GetAsync<IReadOnlyList<RewardItem>>(
+        return GetAsync<List<RewardItem>>(
             "api/admin/items",
             failedMessage: "優待商品一覧の取得に失敗しました。",
             cancellationToken: cancellationToken);

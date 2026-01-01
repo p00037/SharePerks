@@ -1,61 +1,63 @@
 @page "/reward-items"
+@using Admin.Client.Components
 @using Shared.Entities
+
+@inherits FormComponentBase<List<RewardItem>>
 
 <PageTitle>優待商品一覧</PageTitle>
 
-<MudStack Spacing="2">
-    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-        <MudStack Spacing="0">
-            <MudText Typo="Typo.h5">優待商品マスタ一覧</MudText>
-            <MudText Typo="Typo.body2" Color="Color.Secondary">登録済みの優待商品を確認・編集できます。</MudText>
+<MudPaper Class="pa-6" Elevation="1">
+    <MudStack>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+            <MudStack>
+                <MudText Typo="Typo.h5">優待商品マスタ一覧</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">登録済みの優待商品を確認・編集できます。</MudText>
+            </MudStack>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="reward-items/new">
+                新規登録
+            </MudButton>
         </MudStack>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="reward-items/new">
-            新規登録
-        </MudButton>
+        <MudStack>
+        @if (!string.IsNullOrWhiteSpace(_serverErrorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Variant="Variant.Filled">
+                @_serverErrorMessage
+            </MudAlert>
+        }
+
+        @if (_formModel == null){}
+        else if (_formModel.Count == 0)
+        {
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">登録済みの優待商品はありません。</MudAlert>
+        }
+        else
+        {
+            <MudTable Items="_formModel" Hover="true" Elevation="0" Dense="true" Striped="true" Bordered="true" Outlined="true">
+                <HeaderContent>
+                    <MudTh>商品コード</MudTh>
+                    <MudTh>商品名</MudTh>
+                    <MudTh>必要ポイント</MudTh>
+                    <MudTh>表示順</MudTh>
+                    <MudTh>公開状態</MudTh>
+                    <MudTh>更新日時 (UTC)</MudTh>
+                    <MudTh></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="商品コード">@context.ItemCode</MudTd>
+                    <MudTd DataLabel="商品名">@context.ItemName</MudTd>
+                    <MudTd DataLabel="必要ポイント" Class="text-center">@context.RequiredPoints</MudTd>
+                    <MudTd DataLabel="表示順" Class="text-center">@context.DisplayOrder</MudTd>
+                    <MudTd DataLabel="公開状態" Class="text-center" Variant="Variant.Filled" Size="Size.Small">@(context.IsActive ? "公開" : "非公開")</MudTd>
+                    <MudTd DataLabel="更新日時 (UTC)">@context.UpdatedAt.ToString("yyyy/MM/dd HH:mm")</MudTd>
+                    <MudTd>
+                        <MudButton Size="@Size.Small" Variant="Variant.Filled" Color="Color.Info" Href=@($"reward-items/{context.ItemId}/edit")>
+                            編集
+                        </MudButton>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        }
+        </MudStack>
+
     </MudStack>
-
-    @if (!string.IsNullOrWhiteSpace(_errorMessage))
-    {
-        <MudAlert Severity="Severity.Error" Variant="Variant.Filled">@_errorMessage</MudAlert>
-    }
-
-    @if (_items is null)
-    {
-        <MudProgressCircular Color="Color.Default" Indeterminate="true" />
-    }
-    else if (_items.Count == 0)
-    {
-        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">登録済みの優待商品はありません。</MudAlert>
-    }
-    else
-    {
-        <MudTable Items="_items" Hover="true" Elevation="0">
-            <HeaderContent>
-                <MudTh>商品コード</MudTh>
-                <MudTh>商品名</MudTh>
-                <MudTh Align="Align.Right">必要ポイント</MudTh>
-                <MudTh Align="Align.Right">表示順</MudTh>
-                <MudTh>公開状態</MudTh>
-                <MudTh>更新日時 (UTC)</MudTh>
-                <MudTh></MudTh>
-            </HeaderContent>
-            <RowTemplate>
-                <MudTd DataLabel="商品コード">@context.ItemCode</MudTd>
-                <MudTd DataLabel="商品名">@context.ItemName</MudTd>
-                <MudTd DataLabel="必要ポイント" Align="Align.Right">@context.RequiredPoints</MudTd>
-                <MudTd DataLabel="表示順" Align="Align.Right">@context.DisplayOrder</MudTd>
-                <MudTd DataLabel="公開状態">
-                    <MudChip Color="@(context.IsActive ? Color.Success : Color.Default)" Variant="Variant.Filled" Size="Size.Small">
-                        @(context.IsActive ? "公開" : "非公開")
-                    </MudChip>
-                </MudTd>
-                <MudTd DataLabel="更新日時 (UTC)">@context.UpdatedAt.ToString("yyyy/MM/dd HH:mm")</MudTd>
-                <MudTd>
-                    <MudButton Variant="Variant.Text" Color="Color.Primary" Href=$"reward-items/{context.ItemId}/edit">
-                        編集
-                    </MudButton>
-                </MudTd>
-            </RowTemplate>
-        </MudTable>
-    }
-</MudStack>
+</MudPaper>

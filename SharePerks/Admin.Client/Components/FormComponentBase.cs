@@ -11,7 +11,7 @@ namespace Admin.Client.Components
     {
         [Inject] public OverlayState Overlay { get;  set; } = default!;
 
-        protected TModel _formModel = new();
+        protected TModel _formModel = default!;
         protected EditContext? _editContext;
         protected ValidationMessageStore? _messageStore;
         protected string? _serverErrorMessage;
@@ -72,8 +72,8 @@ namespace Admin.Client.Components
             }
             finally
             {
-                Overlay.Hide();
                 StateHasChanged();
+                Overlay.Hide();
             }
         }
 
