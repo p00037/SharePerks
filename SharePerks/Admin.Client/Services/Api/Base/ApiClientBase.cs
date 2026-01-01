@@ -49,5 +49,55 @@ public abstract class ApiClientBase
         var msg = failedMessage ?? "API呼び出しに失敗しました。";
         throw new HttpRequestException($"{msg}({(int)response.StatusCode}) {body}", null, response.StatusCode);
     }
-}
 
+    protected async Task<TResponse> PutAsync<TRequest, TResponse>(
+        string url,
+        TRequest request,
+        string? validationMessage = null,
+        string? failedMessage = null,
+        CancellationToken cancellationToken = default)
+    {
+        using var response = await HttpClient.PutAsJsonAsync(url, request, cancellationToken);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var result = await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken: cancellationToken);
+            return result ?? throw new InvalidOperationException("レスポンスの読み込みに失敗しました。");
+        }
+
+        if (response.StatusCode == HttpStatusCode.BadRequest)
+        {
+            var problem = await response.Content.ReadFromJsonAsync<ValidationProblemDetailsResponse>(
+                cancellationToken: cancellationToken);
+
+            if (problem is not null && problem.Errors is not null)
+            {
+                throw new ApiValidationException(
+                    validationMessage ?? "入力内容に問題があります。",
+                    new ReadOnlyDictionary<string, string[]>(problem.Errors));
+            }
+        }
+
+        var body = await response.Content.ReadAsStringAsync(cancellationToken);
+        var msg = failedMessage ?? "API呼び出しに失敗しました。";
+        throw new HttpRequestException($"{msg}({(int)response.StatusCode}) {body}", null, response.StatusCode);
+    }
+
+    protected async Task<TResponse> GetAsync<TResponse>(
+        string url,
+        string? failedMessage = null,
+        CancellationToken cancellationToken = default)
+    {
+        using var response = await HttpClient.GetAsync(url, cancellationToken);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var result = await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken: cancellationToken);
+            return result ?? throw new InvalidOperationException("レスポンスの読み込みに失敗しました。");
+        }
+
+        var body = await response.Content.ReadAsStringAsync(cancellationToken);
+        var msg = failedMessage ?? "API呼び出しに失敗しました。";
+        throw new HttpRequestException($"{msg}({(int)response.StatusCode}) {body}", null, response.StatusCode);
+    }
+}

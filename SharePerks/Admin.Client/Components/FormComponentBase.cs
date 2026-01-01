@@ -11,7 +11,7 @@ namespace Admin.Client.Components
     {
         [Inject] public OverlayState Overlay { get;  set; } = default!;
 
-        protected TModel _formModel = new();
+        protected TModel _formModel = default!;
         protected EditContext? _editContext;
         protected ValidationMessageStore? _messageStore;
         protected string? _serverErrorMessage;
@@ -24,7 +24,7 @@ namespace Admin.Client.Components
                 _editContext.OnFieldChanged -= HandleFieldChanged;
             }
 
-            _formModel = new();
+            _formModel = formModel;
             _editContext = new EditContext(_formModel);
             _messageStore = new ValidationMessageStore(_editContext);
             _editContext.OnValidationRequested += HandleValidationRequested;
@@ -72,8 +72,8 @@ namespace Admin.Client.Components
             }
             finally
             {
-                Overlay.Hide();
                 StateHasChanged();
+                Overlay.Hide();
             }
         }
 
@@ -104,7 +104,7 @@ namespace Admin.Client.Components
             _editContext.NotifyValidationStateChanged();
         }
 
-        protected Task ResetForm()
+        protected virtual Task ResetForm()
         {
             InitializeEditContext(new TModel());
             _serverErrorMessage = null;
