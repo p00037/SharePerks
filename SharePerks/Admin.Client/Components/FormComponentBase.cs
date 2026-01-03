@@ -12,7 +12,7 @@ namespace Admin.Client.Components
         [Inject] public OverlayState Overlay { get;  set; } = default!;
 
         protected TModel _formModel = default!;
-        protected EditContext? _editContext;
+        protected EditContext? _editContext = default!;
         protected ValidationMessageStore? _messageStore;
         protected string? _serverErrorMessage;
 
@@ -50,6 +50,12 @@ namespace Admin.Client.Components
 
         protected async Task RunAsync(Func<Task> func, string dafaultErrorMessage = "処理に失敗しました。もう一度お試しください")
         {
+            if (!OperatingSystem.IsBrowser())
+            {
+                Overlay.Show();
+                return;
+            }
+
             if (Overlay.Visible)
             {
                 return;
@@ -104,9 +110,9 @@ namespace Admin.Client.Components
             _editContext.NotifyValidationStateChanged();
         }
 
-        protected virtual Task ResetForm()
+        protected virtual Task ResetForm(TModel formModel)
         {
-            InitializeEditContext(new TModel());
+            InitializeEditContext(formModel);
             _serverErrorMessage = null;
             return Task.CompletedTask;
         }

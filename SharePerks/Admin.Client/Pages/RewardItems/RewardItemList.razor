@@ -50,7 +50,7 @@
                     <MudTd DataLabel="公開状態" Class="text-center" Variant="Variant.Filled" Size="Size.Small">@(context.IsActive ? "公開" : "非公開")</MudTd>
                     <MudTd DataLabel="更新日時 (UTC)">@context.UpdatedAt.ToString("yyyy/MM/dd HH:mm")</MudTd>
                     <MudTd>
-                        <MudButton Size="@Size.Small" Variant="Variant.Filled" Color="Color.Info" Href=@($"reward-items/{context.ItemId}/edit")>
+                            <MudButton Size="@Size.Small" Variant="Variant.Filled" Color="Color.Info" Href=@($"reward-items/edit/{context.ItemId}")>
                             編集
                         </MudButton>
                     </MudTd>
