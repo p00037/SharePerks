@@ -99,4 +99,21 @@ public class RewardItemsController : ControllerBase
 
         return Ok(entity);
     }
+
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var entity = await _unitOfWork.RewardItems.GetByIdAsync(id);
+        if (entity is null)
+        {
+            return NotFound();
+        }
+
+        _unitOfWork.RewardItems.Remove(entity);
+        await _unitOfWork.SaveChangesAsync();
+
+        _logger.LogInformation("優待商品を削除しました (ItemId: {ItemId}, ItemCode: {ItemCode})", entity.ItemId, entity.ItemCode);
+
+        return NoContent();
+    }
 }

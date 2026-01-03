@@ -14,5 +14,6 @@ public interface IRewardItemApiClient
         int id,
         CreateRewardItemInput input,
         CancellationToken cancellationToken = default);
+    Task DeleteAsync(int id, CancellationToken cancellationToken = default);
 }
 }

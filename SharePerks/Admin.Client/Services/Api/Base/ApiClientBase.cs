@@ -100,4 +100,21 @@ public abstract class ApiClientBase
         var msg = failedMessage ?? "API呼び出しに失敗しました。";
         throw new HttpRequestException($"{msg}({(int)response.StatusCode}) {body}", null, response.StatusCode);
     }
+
+    protected async Task DeleteAsync(
+        string url,
+        string? failedMessage = null,
+        CancellationToken cancellationToken = default)
+    {
+        using var response = await HttpClient.DeleteAsync(url, cancellationToken);
+
+        if (response.IsSuccessStatusCode)
+        {
+            return;
+        }
+
+        var body = await response.Content.ReadAsStringAsync(cancellationToken);
+        var msg = failedMessage ?? "API呼び出しに失敗しました。";
+        throw new HttpRequestException($"{msg}({(int)response.StatusCode}) {body}", null, response.StatusCode);
+    }
 }
