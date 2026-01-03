@@ -2,6 +2,8 @@ using System.Collections.ObjectModel;
 using System.Data;
 using Admin.Client.Pages;
 using Admin.Client.Services;
+using Admin.Client.Services.Api;
+using Admin.Client.Services.Api.Interface;
 using Admin.Components;
 using Admin.Components.Account;
 using Admin.Data;
@@ -16,6 +18,21 @@ var builder = WebApplication.CreateBuilder(args);
 
 //Overlayサービス
 builder.Services.AddScoped<OverlayState>();
+
+builder.Services.AddScoped(sp =>
+{
+    var httpContext = sp.GetRequiredService<IHttpContextAccessor>().HttpContext;
+    if (httpContext is null)
+        throw new InvalidOperationException("No active HttpContext.");
+
+    var req = httpContext.Request;
+    var baseUri = $"{req.Scheme}://{req.Host}/";
+    return new HttpClient { BaseAddress = new Uri(baseUri) };
+});
+
+//Apiサービス
+builder.Services.AddScoped<IRewardItemApiClient, RewardItemApiClient>();
+
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 

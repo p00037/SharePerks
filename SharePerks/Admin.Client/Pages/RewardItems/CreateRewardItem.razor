@@ -1,26 +1,19 @@
 @page "/reward-items/new"
-@page "/reward-items/{ItemId:int}/edit"
 @using Admin.Client.Components
 @using Admin.Client.Helpers
 
 @inherits FormComponentBase<CreateRewardItemInput>
 
-<PageTitle>@(_isEdit ? "優待商品編集" : "優待商品登録")</PageTitle>
+<PageTitle>優待商品登録</PageTitle>
 
 <MudGrid Class="mb-6">
 
     <MudItem xs="12" md="8">
         <MudPaper Class="pa-6" Elevation="1">
-            @*             <MudStack Spacing="2">
-                <MudStack Spacing="1"> *@
             <MudStack>
                 <MudStack>
-                    <MudText Typo="Typo.h5">@(_isEdit ? "優待商品マスタ編集" : "優待商品マスタ登録")</MudText>
-                    <MudText Typo="Typo.body2" Color="Color.Secondary">
-                        @(_isEdit
-                                                ? "優待商品の情報を編集して更新します。"
-                                                : "優待商品コードと必要ポイントを入力して商品を登録します。")
-                    </MudText>
+                    <MudText Typo="Typo.h5">優待商品マスタ登録</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">優待商品コードと必要ポイントを入力して商品を登録します。</MudText>
                 </MudStack>
 
                 @if (!string.IsNullOrWhiteSpace(_serverErrorMessage))
@@ -89,12 +82,12 @@
                         <MudButton Variant="Variant.Filled"
                                    Color="Color.Primary"
                                    ButtonType="ButtonType.Submit">
-                            @(_isEdit ? "更新する" : "登録する")
+                            登録する
                         </MudButton>
                         <MudButton Variant="Variant.Outlined"
                                    Color="Color.Secondary"
                                    OnClick="HandleResetForm">
-                            @(_isEdit ? "入力を戻す" : "入力をクリア")
+                            入力をクリア
                         </MudButton>
                         <MudButton Variant="Variant.Text"
                                    Color="Color.Default"
@@ -120,7 +113,7 @@
         @if (_createdItem is not null)
         {
             <MudPaper Class="pa-4 mt-4" Elevation="1">
-                <MudText Typo="Typo.h6" Class="mb-2">@(_isEdit ? "更新完了" : "登録完了")</MudText>
+                <MudText Typo="Typo.h6" Class="mb-2">登録完了</MudText>
                 <MudText Typo="Typo.subtitle2" Color="Color.Primary">@_createdItem.ItemName</MudText>
                 <MudText Typo="Typo.body2" Color="Color.Secondary">コード: @_createdItem.ItemCode</MudText>
                 <MudDivider Class="my-2" />

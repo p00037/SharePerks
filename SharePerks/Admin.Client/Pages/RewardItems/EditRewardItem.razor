@@ -1,0 +1,131 @@
+@page "/reward-items/edit/{ItemId:int}"
+@using Admin.Client.Components
+@using Admin.Client.Helpers
+
+@inherits FormComponentBase<CreateRewardItemInput>
+
+<PageTitle>優待商品編集</PageTitle>
+
+<MudGrid Class="mb-6">
+
+    <MudItem xs="12" md="8">
+        <MudPaper Class="pa-6" Elevation="1">
+            <MudStack>
+                <MudStack>
+                    <MudText Typo="Typo.h5">優待商品マスタ編集</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">優待商品の情報を編集して更新します。</MudText>
+                </MudStack>
+
+                @if (!string.IsNullOrWhiteSpace(_serverErrorMessage))
+                {
+                    <MudAlert Severity="Severity.Error" Variant="Variant.Filled">
+                        @_serverErrorMessage
+                    </MudAlert>
+                }
+                @if (!(_editContext is null))
+                {
+                    <EditForm EditContext="_editContext" OnValidSubmit="HandleValidSubmit">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <MudGrid>
+                            <MudItem xs="12" md="6">
+                                <MudTextField @bind-Value="_formModel.ItemCode"
+                                              For="@(() => _formModel.ItemCode)"
+                                              Label="@(PageHelper.DisplayNameFor(() => _formModel.ItemCode))"
+                                              Required="true"
+                                              Immediate="true"
+                                              Autocomplete="On"
+                                              MaxLength="100" />
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudTextField @bind-Value="_formModel.ItemName"
+                                              For="@(() => _formModel.ItemName)"
+                                              Label="@(PageHelper.DisplayNameFor(() => _formModel.ItemName))"
+                                              Required="true"
+                                              Immediate="true"
+                                              Autocomplete="On"
+                                              MaxLength="200" />
+                            </MudItem>
+                            <MudItem xs="12">
+                                <MudTextField @bind-Value="_formModel.ItemDescription"
+                                              For="@(() => _formModel.ItemDescription)"
+                                              Label="@(PageHelper.DisplayNameFor(() => _formModel.ItemDescription))"
+                                              Lines="3"
+                                              MaxLength="1000"
+                                              Placeholder="内容や注意事項を入力してください。"
+                                              Autocomplete="On"
+                                              Immediate="true" />
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudNumericField @bind-Value="_formModel.RequiredPoints"
+                                                 For="@(() => _formModel.RequiredPoints)"
+                                                 Label="@(PageHelper.DisplayNameFor(() => _formModel.RequiredPoints))"
+                                                 Min="1"
+                                                 Required="true"
+                                                 Immediate="true"
+                                                 Variant="Variant.Text" />
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudNumericField @bind-Value="_formModel.DisplayOrder"
+                                                 For="@(() => _formModel.DisplayOrder)"
+                                                 Label="@(PageHelper.DisplayNameFor(() => _formModel.DisplayOrder))"
+                                                 Min="0"
+                                                 Immediate="true"
+                                                 Variant="Variant.Text" />
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudSwitch @bind-Value="_formModel.IsActive" Color="Color.Primary" Label="@(PageHelper.DisplayNameFor(() => _formModel.IsActive))" />
+                            </MudItem>
+                        </MudGrid>
+
+                        <MudStack Row="true" Spacing="2" Class="mt-4">
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       ButtonType="ButtonType.Submit">
+                                更新する
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined"
+                                       Color="Color.Secondary"
+                                       OnClick="HandleResetForm">
+                                入力を戻す
+                            </MudButton>
+                            <MudButton Variant="Variant.Text"
+                                       Color="Color.Default"
+                                       Href="reward-items">
+                                一覧へ戻る
+                            </MudButton>
+                        </MudStack>
+                    </EditForm>
+                }
+            </MudStack>
+        </MudPaper>
+    </MudItem>
+
+    <MudItem xs="12" md="4">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudText Typo="Typo.h6" Class="mb-2">登録のポイント</MudText>
+            <MudList T="string" Dense="true">
+                <MudListItem T="string">商品コードは既存のコードと重複しないようにしてください。</MudListItem>
+                <MudListItem T="string">必要ポイントは 1 以上の整数で入力します。</MudListItem>
+                <MudListItem T="string">公開設定をオフにすると株主画面に表示されません。</MudListItem>
+            </MudList>
+        </MudPaper>
+
+        @if (_createdItem is not null)
+        {
+            <MudPaper Class="pa-4 mt-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">更新完了</MudText>
+                <MudText Typo="Typo.subtitle2" Color="Color.Primary">@_createdItem.ItemName</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">コード: @_createdItem.ItemCode</MudText>
+                <MudDivider Class="my-2" />
+                <MudStack Spacing="1">
+                    <MudText Typo="Typo.body2">必要ポイント: @_createdItem.RequiredPoints</MudText>
+                    <MudText Typo="Typo.body2">表示順: @_createdItem.DisplayOrder</MudText>
+                    <MudText Typo="Typo.body2">状態: @(_createdItem.IsActive ? "公開" : "非公開")</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">更新日時 (UTC): @_createdItem.UpdatedAt.ToString("yyyy/MM/dd HH:mm")</MudText>
+                </MudStack>
+            </MudPaper>
+        }
+    </MudItem>
+</MudGrid>
