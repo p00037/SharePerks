@@ -54,7 +54,7 @@
                             <MudButton Size="@Size.Small" Variant="Variant.Filled" Color="Color.Info" Href=@($"reward-items/edit/{context.ItemId}")>
                                 編集
                             </MudButton>
-                            <MudButton Size="@Size.Small" Variant="Variant.Filled" Color="Color.Error" OnClick="() => OnDeleteAsync(context)">
+                                <MudButton Size="@Size.Small" Variant="Variant.Filled" Color="Color.Error" OnClick="() => HandleDelete(context)">
                                 削除
                             </MudButton>
                         </MudStack>
