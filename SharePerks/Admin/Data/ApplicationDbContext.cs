@@ -11,6 +11,8 @@ namespace Admin.Data
             base.OnModelCreating(modelBuilder);
 
             modelBuilder.Entity<RewardItem>();
+            modelBuilder.Entity<Shareholder>();
+            modelBuilder.Entity<ImportBatch>();
         }
     }
 }

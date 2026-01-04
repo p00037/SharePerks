@@ -10,10 +10,11 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.Services.AddMudServices();
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 
-//Apiサービス
+// Api繧ｵ繝ｼ繝薙せ
 builder.Services.AddScoped<IRewardItemApiClient, RewardItemApiClient>();
+builder.Services.AddScoped<IShareholderImportApiClient, ShareholderImportApiClient>();
 
-//Overlayサービス
+// Overlay繧ｵ繝ｼ繝薙せ
 builder.Services.AddScoped<OverlayState>();
 
 builder.Services.AddAuthorizationCore();
