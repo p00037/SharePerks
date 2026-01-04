@@ -45,4 +45,12 @@ public class RewardItemApiClient: ApiClientBase, IRewardItemApiClient
             failedMessage: "優待商品の更新に失敗しました。",
             cancellationToken: cancellationToken);
     }
+
+    public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
+    {
+        await base.DeleteAsync(
+            $"api/admin/items/{id}",
+            failedMessage: "優待商品の削除に失敗しました。",
+            cancellationToken: cancellationToken);
+    }
 }
