@@ -50,13 +50,13 @@ public class ShareholderImportsController : ControllerBase
     {
         if (file is null || file.Length == 0)
         {
-            ModelState.AddModelError(nameof(file), "CSVファイルを選択してください。");
+            ModelState.AddModelError("", "CSVファイルを選択してください。");
             return ValidationProblem(ModelState);
         }
 
         if (!file.FileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
         {
-            ModelState.AddModelError(nameof(file), "CSV形式のファイルを選択してください。");
+            ModelState.AddModelError("", "CSV形式のファイルを選択してください。");
             return ValidationProblem(ModelState);
         }
 
@@ -85,14 +85,14 @@ public class ShareholderImportsController : ControllerBase
 
         if (parser.EndOfData)
         {
-            ModelState.AddModelError(nameof(file), "CSVファイルが空です。");
+            ModelState.AddModelError("", "CSVファイルが空です。");
             return ValidationProblem(ModelState);
         }
 
         var headers = parser.ReadFields();
         if (headers is null || headers.Length == 0)
         {
-            ModelState.AddModelError(nameof(file), "CSVヘッダーの読み取りに失敗しました。");
+            ModelState.AddModelError("", "CSVヘッダーの読み取りに失敗しました。");
             return ValidationProblem(ModelState);
         }
 
@@ -105,7 +105,7 @@ public class ShareholderImportsController : ControllerBase
         {
             if (!headerMap.ContainsKey(requiredHeader))
             {
-                ModelState.AddModelError(nameof(file), $"CSVヘッダーに {requiredHeader} がありません。");
+                ModelState.AddModelError("", $"CSVヘッダーに {requiredHeader} がありません。");
             }
         }
 
@@ -127,7 +127,8 @@ public class ShareholderImportsController : ControllerBase
             if (fields.Length < headers.Length)
             {
                 errorCount++;
-                errorMessages.Add($"{rowNumber}行目: 列数が不足しています。");
+                //errorMessages.Add($"{rowNumber}行目: 列数が不足しています。");
+                ModelState.AddModelError("", $"{rowNumber}行目: 列数が不足しています。");
                 continue;
             }
 
@@ -148,42 +149,48 @@ public class ShareholderImportsController : ControllerBase
             if (!ValidateRequired(shareholderNo, shareholderName, postalCode, address1, address2, holdingsText, grantedPointsText, loginId, initialPassword))
             {
                 errorCount++;
-                errorMessages.Add($"{rowNumber}行目: 必須項目が不足しています。");
+                //errorMessages.Add($"{rowNumber}行目: 必須項目が不足しています。");
+                ModelState.AddModelError("", $"{rowNumber}行目: 必須項目が不足しています。");
                 continue;
             }
 
             if (!int.TryParse(holdingsText, out var holdings))
             {
                 errorCount++;
-                errorMessages.Add($"{rowNumber}行目: Holdings が数値ではありません。");
+                //errorMessages.Add($"{rowNumber}行目: Holdings が数値ではありません。");
+                ModelState.AddModelError("", $"{rowNumber}行目: Holdings が数値ではありません。");
                 continue;
             }
 
             if (!int.TryParse(grantedPointsText, out var grantedPoints))
             {
                 errorCount++;
-                errorMessages.Add($"{rowNumber}行目: GrantedPoints が数値ではありません。");
+                //errorMessages.Add($"{rowNumber}行目: GrantedPoints が数値ではありません。");
+                ModelState.AddModelError("", $"{rowNumber}行目: GrantedPoints が数値ではありません。");
                 continue;
             }
 
             if (!processedShareholderNos.Add(shareholderNo))
             {
                 errorCount++;
-                errorMessages.Add($"{rowNumber}行目: ShareholderNo が重複しています。");
+                //errorMessages.Add($"{rowNumber}行目: ShareholderNo が重複しています。");
+                ModelState.AddModelError("", $"{rowNumber}行目: ShareholderNo が重複しています。");
                 continue;
             }
 
             if (await _unitOfWork.Shareholders.ExistsByShareholderNoAsync(shareholderNo, cancellationToken))
             {
                 errorCount++;
-                errorMessages.Add($"{rowNumber}行目: ShareholderNo が既に登録されています。");
+                //errorMessages.Add($"{rowNumber}行目: ShareholderNo が既に登録されています。");
+                ModelState.AddModelError("", $"{rowNumber}行目: ShareholderNo が既に登録されています。");
                 continue;
             }
 
             if (await _userManager.FindByNameAsync(loginId) is not null)
             {
                 errorCount++;
-                errorMessages.Add($"{rowNumber}行目: LoginId が既に登録されています。");
+                //errorMessages.Add($"{rowNumber}行目: LoginId が既に登録されています。");
+                ModelState.AddModelError("", $"{rowNumber}行目: LoginId が既に登録されています。");
                 continue;
             }
 
@@ -198,7 +205,8 @@ public class ShareholderImportsController : ControllerBase
             if (!createResult.Succeeded)
             {
                 errorCount++;
-                errorMessages.Add($"{rowNumber}行目: ユーザー作成に失敗しました。");
+                //errorMessages.Add($"{rowNumber}行目: ユーザー作成に失敗しました。");
+                ModelState.AddModelError("", $"{rowNumber}行目: ユーザー作成に失敗しました。");
                 continue;
             }
 
@@ -207,7 +215,8 @@ public class ShareholderImportsController : ControllerBase
             {
                 await _userManager.DeleteAsync(user);
                 errorCount++;
-                errorMessages.Add($"{rowNumber}行目: ロール付与に失敗しました。");
+                //errorMessages.Add($"{rowNumber}行目: ロール付与に失敗しました。");
+                ModelState.AddModelError("", $"{rowNumber}行目: ロール付与に失敗しました。");
                 continue;
             }
 
@@ -234,6 +243,12 @@ public class ShareholderImportsController : ControllerBase
             await _unitOfWork.Shareholders.AddAsync(shareholder, cancellationToken);
             successCount++;
         }
+
+        if (errorCount > 0)
+        {
+            return ValidationProblem(ModelState);
+        }
+
 
         var importBatch = new ImportBatch
         {

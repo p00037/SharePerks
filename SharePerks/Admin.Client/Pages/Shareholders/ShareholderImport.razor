@@ -18,14 +18,16 @@
 
                 @if (!string.IsNullOrWhiteSpace(_serverErrorMessage))
                 {
-                    <MudAlert Severity="Severity.Error" Variant="Variant.Filled">
-                        @_serverErrorMessage
+                    <MudAlert Severity="Severity.Error" Dense="true" NoIcon="true">
+                        <div style="max-height: 180px; overflow-y: auto; white-space: pre-line;">
+                            @_serverErrorMessage
+                        </div>
                     </MudAlert>
                 }
 
                 <EditForm EditContext="_editContext" OnValidSubmit="HandleValidSubmit">
                     <DataAnnotationsValidator />
-                    <ValidationSummary />
+                    @* <ValidationSummary /> *@
 
                     <MudStack Spacing="2">
                         <MudText Typo="Typo.subtitle2">CSVファイル</MudText>

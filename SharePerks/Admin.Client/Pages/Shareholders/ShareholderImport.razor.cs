@@ -20,47 +20,56 @@ public partial class ShareholderImport
     private long? _selectedFileSize;
     private int _fileInputKey;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        InitializeEditContext(new ShareholderImportInput());
+        await RunAsync(() =>
+        {
+            InitializeEditContext(new ShareholderImportInput());
+            return Task.CompletedTask;
+        }, "初期化に失敗しました。");
     }
 
-    private void HandleFileChanged(InputFileChangeEventArgs args)
+    private async Task HandleFileChanged(InputFileChangeEventArgs args)
     {
-        _serverErrorMessage = null;
-        _importResult = null;
-
-        var file = args.File;
-        if (!file.Name.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+        await RunAsync(() =>
         {
-            _serverErrorMessage = "CSVファイルを選択してください。";
-            ClearSelectedFile();
-            return;
-        }
+            _serverErrorMessage = null;
+            _importResult = null;
 
-        if (file.Size > MaxFileSize)
-        {
-            _serverErrorMessage = $"ファイルサイズが上限({MaxFileSizeDescription})を超えています。";
-            ClearSelectedFile();
-            return;
-        }
+            var file = args.File;
+            if (!file.Name.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+            {
+                _serverErrorMessage = "CSVファイルを選択してください。";
+                ClearSelectedFile();
+                return Task.CompletedTask;
+            }
 
-        _formModel.File = file;
-        _selectedFileName = file.Name;
-        _selectedFileSize = file.Size;
-        _editContext?.NotifyFieldChanged(new FieldIdentifier(_formModel, nameof(ShareholderImportInput.File)));
+            if (file.Size > MaxFileSize)
+            {
+                _serverErrorMessage = $"ファイルサイズが上限({MaxFileSizeDescription})を超えています。";
+                ClearSelectedFile();
+                return Task.CompletedTask;
+            }
+
+            _formModel.File = file;
+            _selectedFileName = file.Name;
+            _selectedFileSize = file.Size;
+            _editContext?.NotifyFieldChanged(new FieldIdentifier(_formModel, nameof(ShareholderImportInput.File)));
+            return Task.CompletedTask;
+        }, "ファイル選択時にエラーが発生しました");
+
     }
 
     private async Task HandleValidSubmit()
     {
-        if (_formModel.File is null)
-        {
-            _serverErrorMessage = "CSVファイルを選択してください。";
-            return;
-        }
-
         await RunAsync(async () =>
         {
+            if (_formModel.File is null)
+            {
+                _serverErrorMessage = "CSVファイルを選択してください。";
+                return;
+            }
+
             _importResult = await ApiClient.ImportAsync(_formModel.File);
             Snackbar.Add("株主CSVインポートが完了しました。", Severity.Success);
         }, "株主CSVインポートに失敗しました。");
@@ -68,10 +77,13 @@ public partial class ShareholderImport
 
     private async Task HandleResetForm()
     {
-        _importResult = null;
-        _serverErrorMessage = null;
-        ClearSelectedFile();
-        await ResetForm(new ShareholderImportInput());
+        await RunAsync(async () =>
+        {
+            _importResult = null;
+            _serverErrorMessage = null;
+            ClearSelectedFile();
+            await ResetForm(new ShareholderImportInput());
+        }, "クリア処理が失敗しました。");
     }
 
     private void ClearSelectedFile()
