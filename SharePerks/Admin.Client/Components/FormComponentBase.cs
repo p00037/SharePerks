@@ -7,9 +7,9 @@ using static MudBlazor.CategoryTypes;
 
 namespace Admin.Client.Components
 {
-    public abstract class FormComponentBase<TModel> :Microsoft.AspNetCore.Components.ComponentBase, IDisposable where TModel : class, new()
+    public abstract class FormComponentBase<TModel> : Microsoft.AspNetCore.Components.ComponentBase, IDisposable where TModel : class, new()
     {
-        [Inject] public OverlayState Overlay { get;  set; } = default!;
+        [Inject] public OverlayState Overlay { get; set; } = default!;
 
         protected TModel _formModel = default!;
         protected EditContext? _editContext = default!;
@@ -69,7 +69,8 @@ namespace Admin.Client.Components
             catch (ApiValidationException ex)
             {
                 ApplyServerValidationErrors(ex.Errors);
-                _serverErrorMessage = ex.Message;
+                //_serverErrorMessage = ex.Message;
+                _serverErrorMessage = string.Join("\n", ex.Errors.Where(x => string.IsNullOrEmpty(x.Key)).SelectMany(x => x.Value));
             }
             catch (Exception ex)
             {
@@ -83,13 +84,13 @@ namespace Admin.Client.Components
             }
         }
 
-        protected async Task Run(Action onValidSubmit)
+        protected async Task Run(Action onValidSubmit, string dafaultErrorMessage = "処理に失敗しました。もう一度お試しください")
         {
             await RunAsync(async () =>
             {
                 onValidSubmit();
                 await Task.CompletedTask;
-            });
+            }, dafaultErrorMessage);
         }
 
         private void ApplyServerValidationErrors(IReadOnlyDictionary<string, string[]> errors)

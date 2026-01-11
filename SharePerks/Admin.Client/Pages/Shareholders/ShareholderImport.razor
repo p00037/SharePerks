@@ -1,0 +1,108 @@
+@page "/shareholders/import"
+@using Admin.Client.Components
+@using Admin.Client.Models
+@using Shared.Entities
+
+@inherits FormComponentBase<ShareholderImportInput>
+
+<PageTitle>株主CSVインポート</PageTitle>
+
+<MudGrid Class="mb-6">
+    <MudItem xs="12" md="8">
+        <MudPaper Class="pa-6" Elevation="1">
+            <MudStack>
+                <MudStack>
+                    <MudText Typo="Typo.h5">株主CSVインポート</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">株主名簿CSVを取り込み、株主ユーザーを一括登録します。</MudText>
+                </MudStack>
+
+                @if (!string.IsNullOrWhiteSpace(_serverErrorMessage))
+                {
+                    <MudAlert Severity="Severity.Error" Dense="true" NoIcon="true">
+                        <div style="max-height: 180px; overflow-y: auto; white-space: pre-line;">
+                            @_serverErrorMessage
+                        </div>
+                    </MudAlert>
+                }
+
+                <EditForm EditContext="_editContext" OnValidSubmit="HandleValidSubmit">
+                    <DataAnnotationsValidator />
+                    @* <ValidationSummary /> *@
+
+                    <MudStack Spacing="2">
+                        <MudText Typo="Typo.subtitle2">CSVファイル</MudText>
+                        <InputFile @key="_fileInputKey"
+                                   OnChange="HandleFileChanged"
+                                   accept=".csv"
+                                   class="mud-input-root" />
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                            UTF-8(BOM)・カンマ区切り・ヘッダ行ありのCSVを選択してください。
+                        </MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                            最大ファイルサイズ: @MaxFileSizeDescription
+                        </MudText>
+
+                        @if (!string.IsNullOrWhiteSpace(_selectedFileName))
+                        {
+                            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                                選択中: @_selectedFileName (@FormatFileSize(_selectedFileSize))
+                            </MudAlert>
+                        }
+                    </MudStack>
+
+                    <MudStack Row="true" Spacing="2" Class="mt-4">
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   ButtonType="ButtonType.Submit"
+                                   Disabled="@(_formModel.File is null)">
+                            インポート開始
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Secondary"
+                                   OnClick="HandleResetForm">
+                            クリア
+                        </MudButton>
+                    </MudStack>
+                </EditForm>
+            </MudStack>
+        </MudPaper>
+
+        @if (_importResult is not null)
+        {
+            <MudPaper Class="pa-4 mt-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">インポート結果</MudText>
+                <MudStack Spacing="1">
+                    <MudText Typo="Typo.body2">ファイル名: @_importResult.FileName</MudText>
+                    <MudText Typo="Typo.body2">実行日時 (UTC): @_importResult.ExecutedAt.ToString("yyyy/MM/dd HH:mm")</MudText>
+                    <MudText Typo="Typo.body2">成功件数: @_importResult.SuccessCount</MudText>
+                    <MudText Typo="Typo.body2">エラー件数: @_importResult.ErrorCount</MudText>
+                </MudStack>
+            </MudPaper>
+        }
+    </MudItem>
+
+    <MudItem xs="12" md="4">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudText Typo="Typo.h6" Class="mb-2">CSV項目</MudText>
+            <MudList T="string" Dense="true">
+                <MudListItem T="string">ShareholderNo (必須)</MudListItem>
+                <MudListItem T="string">ShareholderName (必須)</MudListItem>
+                <MudListItem T="string">ShareholderNameKana (任意)</MudListItem>
+                <MudListItem T="string">PostalCode (必須)</MudListItem>
+                <MudListItem T="string">Address1 (必須)</MudListItem>
+                <MudListItem T="string">Address2 (必須)</MudListItem>
+                <MudListItem T="string">Address3 (任意)</MudListItem>
+                <MudListItem T="string">PhoneNumber (任意)</MudListItem>
+                <MudListItem T="string">Holdings (必須, 数値)</MudListItem>
+                <MudListItem T="string">CourseCode (任意)</MudListItem>
+                <MudListItem T="string">GrantedPoints (必須, 数値)</MudListItem>
+                <MudListItem T="string">LoginId (必須)</MudListItem>
+                <MudListItem T="string">InitialPassword (必須)</MudListItem>
+            </MudList>
+            <MudDivider Class="my-2" />
+            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                既存の株主番号と重複する行はエラーとして扱われます。
+            </MudText>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
