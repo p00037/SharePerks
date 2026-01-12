@@ -56,6 +56,14 @@
                                           Autocomplete="On"
                                           Immediate="true" />
                         </MudItem>
+                        <MudItem xs="12">
+                            <MudText Typo="Typo.subtitle2" Class="mb-1">商品画像</MudText>
+                            <InputFile OnChange="HandleImageFileChange" accept="image/*" />
+                            @if (!string.IsNullOrWhiteSpace(_selectedImageName))
+                            {
+                                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">選択中: @_selectedImageName</MudText>
+                            }
+                        </MudItem>
                         <MudItem xs="12" md="6">
                             <MudNumericField @bind-Value="_formModel.RequiredPoints"
                                              For="@(() => _formModel.RequiredPoints)"
