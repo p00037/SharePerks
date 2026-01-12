@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.Net;
+using System.Net.Http;
 using System.Net.Http.Json;
 using Admin.Client.Models;
 using Admin.Client.Services.Api.Exceptions;
@@ -50,6 +51,39 @@ public abstract class ApiClientBase
         throw new HttpRequestException($"{msg}({(int)response.StatusCode}) {body}", null, response.StatusCode);
     }
 
+    protected async Task<TResponse> PostMultipartAsync<TResponse>(
+        string url,
+        MultipartFormDataContent content,
+        string? validationMessage = null,
+        string? failedMessage = null,
+        CancellationToken cancellationToken = default)
+    {
+        using var response = await HttpClient.PostAsync(url, content, cancellationToken);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var result = await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken: cancellationToken);
+            return result ?? throw new InvalidOperationException("レスポンスの読み込みに失敗しました。");
+        }
+
+        if (response.StatusCode == HttpStatusCode.BadRequest)
+        {
+            var problem = await response.Content.ReadFromJsonAsync<ValidationProblemDetailsResponse>(
+                cancellationToken: cancellationToken);
+
+            if (problem is not null && problem.Errors is not null)
+            {
+                throw new ApiValidationException(
+                    validationMessage ?? "入力内容に問題があります。",
+                    new ReadOnlyDictionary<string, string[]>(problem.Errors));
+            }
+        }
+
+        var body = await response.Content.ReadAsStringAsync(cancellationToken);
+        var msg = failedMessage ?? "API呼び出しに失敗しました。";
+        throw new HttpRequestException($"{msg}({(int)response.StatusCode}) {body}", null, response.StatusCode);
+    }
+
     protected async Task<TResponse> PutAsync<TRequest, TResponse>(
         string url,
         TRequest request,
@@ -58,6 +92,39 @@ public abstract class ApiClientBase
         CancellationToken cancellationToken = default)
     {
         using var response = await HttpClient.PutAsJsonAsync(url, request, cancellationToken);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var result = await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken: cancellationToken);
+            return result ?? throw new InvalidOperationException("レスポンスの読み込みに失敗しました。");
+        }
+
+        if (response.StatusCode == HttpStatusCode.BadRequest)
+        {
+            var problem = await response.Content.ReadFromJsonAsync<ValidationProblemDetailsResponse>(
+                cancellationToken: cancellationToken);
+
+            if (problem is not null && problem.Errors is not null)
+            {
+                throw new ApiValidationException(
+                    validationMessage ?? "入力内容に問題があります。",
+                    new ReadOnlyDictionary<string, string[]>(problem.Errors));
+            }
+        }
+
+        var body = await response.Content.ReadAsStringAsync(cancellationToken);
+        var msg = failedMessage ?? "API呼び出しに失敗しました。";
+        throw new HttpRequestException($"{msg}({(int)response.StatusCode}) {body}", null, response.StatusCode);
+    }
+
+    protected async Task<TResponse> PutMultipartAsync<TResponse>(
+        string url,
+        MultipartFormDataContent content,
+        string? validationMessage = null,
+        string? failedMessage = null,
+        CancellationToken cancellationToken = default)
+    {
+        using var response = await HttpClient.PutAsync(url, content, cancellationToken);
 
         if (response.IsSuccessStatusCode)
         {

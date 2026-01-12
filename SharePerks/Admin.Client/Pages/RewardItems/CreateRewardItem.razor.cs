@@ -1,11 +1,10 @@
-﻿using System.Net;
-using Admin.Client.Components;
+﻿using Admin.Client.Components;
 using Admin.Client.Models;
 using Admin.Client.Services.Api.Interface;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Forms;
 using MudBlazor;
 using Shared.Entities;
-using static MudBlazor.CategoryTypes;
 
 namespace Admin.Client.Pages.RewardItems
 {
@@ -15,6 +14,8 @@ namespace Admin.Client.Pages.RewardItems
         [Inject] public ISnackbar Snackbar { get; set; } = default!;
 
         private RewardItem? _createdItem;
+        private IBrowserFile? _imageFile;
+        private string? _selectedImageName;
 
         private Task HandleValidSubmit() => RunAsync(ValidSubmit, "登録に失敗しました。もう一度実行してください");
         private Task HandleResetForm() => RunAsync(ResetForm);
@@ -32,15 +33,29 @@ namespace Admin.Client.Pages.RewardItems
 
         private async Task ValidSubmit()
         {
-            var created = await ApiClient.CreateAsync(_formModel);
+            var created = await ApiClient.CreateAsync(_formModel, _imageFile);
             _createdItem = created;
             Snackbar.Add($"優待商品『{created.ItemName}』を登録しました。", Severity.Success);
             base.InitializeEditContext(new CreateRewardItemInput());
+            ResetImageSelection();
         }
 
         protected Task ResetForm()
         {
+            ResetImageSelection();
             return base.ResetForm(new CreateRewardItemInput());
+        }
+
+        private void HandleImageFileChange(InputFileChangeEventArgs args)
+        {
+            _imageFile = args.File;
+            _selectedImageName = _imageFile?.Name;
+        }
+
+        private void ResetImageSelection()
+        {
+            _imageFile = null;
+            _selectedImageName = null;
         }
     }
 }

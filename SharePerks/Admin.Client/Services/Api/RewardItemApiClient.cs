@@ -1,11 +1,16 @@
+using System.Globalization;
+using System.Net.Http.Headers;
 using Admin.Client.Models;
 using Admin.Client.Services.Api.Interface;
+using Microsoft.AspNetCore.Components.Forms;
 using Shared.Entities;
 
 namespace Admin.Client.Services.Api;
 
 public class RewardItemApiClient: ApiClientBase, IRewardItemApiClient
 {
+    private const long MaxImageSize = 5 * 1024 * 1024;
+
     public RewardItemApiClient(HttpClient httpClient):base(httpClient)
     {
     }
@@ -26,21 +31,30 @@ public class RewardItemApiClient: ApiClientBase, IRewardItemApiClient
             cancellationToken: cancellationToken);
     }
 
-    public async Task<RewardItem> CreateAsync(CreateRewardItemInput input, CancellationToken cancellationToken = default)
+    public async Task<RewardItem> CreateAsync(
+        CreateRewardItemInput input,
+        IBrowserFile? imageFile = null,
+        CancellationToken cancellationToken = default)
     {
-        return await PostAsync<CreateRewardItemInput, RewardItem>(
+        using var content = BuildMultipartContent(input, imageFile);
+        return await PostMultipartAsync<RewardItem>(
             "api/admin/items",
-            input,
+            content,
             validationMessage: "入力内容を確認してください。",
             failedMessage: "優待商品の登録に失敗しました。",
             cancellationToken: cancellationToken);
     }
 
-    public async Task<RewardItem> UpdateAsync(int id, CreateRewardItemInput input, CancellationToken cancellationToken = default)
+    public async Task<RewardItem> UpdateAsync(
+        int id,
+        CreateRewardItemInput input,
+        IBrowserFile? imageFile = null,
+        CancellationToken cancellationToken = default)
     {
-        return await PutAsync<CreateRewardItemInput, RewardItem>(
+        using var content = BuildMultipartContent(input, imageFile);
+        return await PutMultipartAsync<RewardItem>(
             $"api/admin/items/{id}",
-            input,
+            content,
             validationMessage: "入力内容を確認してください。",
             failedMessage: "優待商品の更新に失敗しました。",
             cancellationToken: cancellationToken);
@@ -52,5 +66,26 @@ public class RewardItemApiClient: ApiClientBase, IRewardItemApiClient
             $"api/admin/items/{id}",
             failedMessage: "優待商品の削除に失敗しました。",
             cancellationToken: cancellationToken);
+    }
+
+    private static MultipartFormDataContent BuildMultipartContent(CreateRewardItemInput input, IBrowserFile? imageFile)
+    {
+        var content = new MultipartFormDataContent();
+        content.Add(new StringContent(input.ItemCode), nameof(input.ItemCode));
+        content.Add(new StringContent(input.ItemName), nameof(input.ItemName));
+        content.Add(new StringContent(input.ItemDescription ?? string.Empty), nameof(input.ItemDescription));
+        content.Add(new StringContent(input.RequiredPoints.ToString(CultureInfo.InvariantCulture)), nameof(input.RequiredPoints));
+        content.Add(new StringContent(input.DisplayOrder.ToString(CultureInfo.InvariantCulture)), nameof(input.DisplayOrder));
+        content.Add(new StringContent(input.IsActive.ToString()), nameof(input.IsActive));
+
+        if (imageFile is not null)
+        {
+            var stream = imageFile.OpenReadStream(MaxImageSize);
+            var fileContent = new StreamContent(stream);
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue(imageFile.ContentType);
+            content.Add(fileContent, "ImageFile", imageFile.Name);
+        }
+
+        return content;
     }
 }
