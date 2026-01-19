@@ -2,7 +2,7 @@
 @using Admin.Client.Components
 @using Admin.Client.Helpers
 
-@inherits FormComponentBase<CreateRewardItemInput>
+@inherits FormComponentBase<RewardItemInput>
 
 <PageTitle>優待商品編集</PageTitle>
 
@@ -56,6 +56,18 @@
                                               Placeholder="内容や注意事項を入力してください。"
                                               Autocomplete="On"
                                               Immediate="true" />
+                            </MudItem>
+                            <MudItem xs="12">
+                                <MudText Typo="Typo.subtitle2" Class="mb-1">商品画像</MudText>
+                                <InputFile OnChange="HandleImageFileChange" accept="image/*" />
+                                @if (!string.IsNullOrWhiteSpace(_selectedImageName))
+                                {
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">選択中: @_selectedImageName</MudText>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(_loadedItem?.ImagePath))
+                                {
+                                    <MudImage Src="@_loadedItem!.ImagePath" Alt="商品画像" Class="mt-2" Height="160" />
+                                }
                             </MudItem>
                             <MudItem xs="12" md="6">
                                 <MudNumericField @bind-Value="_formModel.RequiredPoints"

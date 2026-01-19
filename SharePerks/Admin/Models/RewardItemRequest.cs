@@ -1,8 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
-namespace Admin.Client.Models;
+namespace Admin.Models;
 
-public class CreateRewardItemInput
+public class RewardItemRequest
 {
     [Display(Name = "商品コード")]
     [Required(ErrorMessage = "「{0}」は必須です。")]
@@ -28,4 +29,7 @@ public class CreateRewardItemInput
 
     [Display(Name = "公開する")]
     public bool IsActive { get; set; } = true;
+
+    [Display(Name = "商品画像")]
+    public IFormFile? ImageFile { get; set; }
 }

@@ -1,20 +1,21 @@
-﻿using System.Net;
-using Admin.Client.Components;
+﻿using Admin.Client.Components;
 using Admin.Client.Models;
 using Admin.Client.Services.Api.Interface;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Forms;
 using MudBlazor;
 using Shared.Entities;
-using static MudBlazor.CategoryTypes;
 
 namespace Admin.Client.Pages.RewardItems
 {
-    public partial class CreateRewardItem : FormComponentBase<CreateRewardItemInput>
+    public partial class CreateRewardItem : FormComponentBase<RewardItemInput>
     {
         [Inject] public IRewardItemApiClient ApiClient { get; set; } = default!;
         [Inject] public ISnackbar Snackbar { get; set; } = default!;
 
         private RewardItem? _createdItem;
+        private IBrowserFile? _imageFile;
+        private string? _selectedImageName;
 
         private Task HandleValidSubmit() => RunAsync(ValidSubmit, "登録に失敗しました。もう一度実行してください");
         private Task HandleResetForm() => RunAsync(ResetForm);
@@ -26,21 +27,35 @@ namespace Admin.Client.Pages.RewardItems
 
         private Task NewItem()
         {
-            base.InitializeEditContext(new CreateRewardItemInput());
+            base.InitializeEditContext(new RewardItemInput());
             return Task.CompletedTask;
         }
 
         private async Task ValidSubmit()
         {
-            var created = await ApiClient.CreateAsync(_formModel);
+            var created = await ApiClient.CreateAsync(_formModel, _imageFile);
             _createdItem = created;
             Snackbar.Add($"優待商品『{created.ItemName}』を登録しました。", Severity.Success);
-            base.InitializeEditContext(new CreateRewardItemInput());
+            base.InitializeEditContext(new RewardItemInput());
+            ResetImageSelection();
         }
 
         protected Task ResetForm()
         {
-            return base.ResetForm(new CreateRewardItemInput());
+            ResetImageSelection();
+            return base.ResetForm(new RewardItemInput());
+        }
+
+        private void HandleImageFileChange(InputFileChangeEventArgs args)
+        {
+            _imageFile = args.File;
+            _selectedImageName = _imageFile?.Name;
+        }
+
+        private void ResetImageSelection()
+        {
+            _imageFile = null;
+            _selectedImageName = null;
         }
     }
 }
