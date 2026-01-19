@@ -32,7 +32,7 @@ public class RewardItemApiClient: ApiClientBase, IRewardItemApiClient
     }
 
     public async Task<RewardItem> CreateAsync(
-        CreateRewardItemInput input,
+        RewardItemInput input,
         IBrowserFile? imageFile = null,
         CancellationToken cancellationToken = default)
     {
@@ -47,7 +47,7 @@ public class RewardItemApiClient: ApiClientBase, IRewardItemApiClient
 
     public async Task<RewardItem> UpdateAsync(
         int id,
-        CreateRewardItemInput input,
+        RewardItemInput input,
         IBrowserFile? imageFile = null,
         CancellationToken cancellationToken = default)
     {
@@ -68,7 +68,7 @@ public class RewardItemApiClient: ApiClientBase, IRewardItemApiClient
             cancellationToken: cancellationToken);
     }
 
-    private static MultipartFormDataContent BuildMultipartContent(CreateRewardItemInput input, IBrowserFile? imageFile)
+    private static MultipartFormDataContent BuildMultipartContent(RewardItemInput input, IBrowserFile? imageFile)
     {
         var content = new MultipartFormDataContent();
         content.Add(new StringContent(input.ItemCode), nameof(input.ItemCode));

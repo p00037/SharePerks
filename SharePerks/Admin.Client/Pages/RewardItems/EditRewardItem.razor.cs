@@ -8,7 +8,7 @@ using Shared.Entities;
 
 namespace Admin.Client.Pages.RewardItems
 {
-    public partial class EditRewardItem : FormComponentBase<CreateRewardItemInput>
+    public partial class EditRewardItem : FormComponentBase<RewardItemInput>
     {
         [Inject] public IRewardItemApiClient ApiClient { get; set; } = default!;
         [Inject] public ISnackbar Snackbar { get; set; } = default!;
@@ -79,9 +79,9 @@ namespace Admin.Client.Pages.RewardItems
             _selectedImageName = null;
         }
 
-        private static CreateRewardItemInput ToInputModel(RewardItem item)
+        private static RewardItemInput ToInputModel(RewardItem item)
         {
-            return new CreateRewardItemInput
+            return new RewardItemInput
             {
                 ItemCode = item.ItemCode,
                 ItemName = item.ItemName,

@@ -8,7 +8,7 @@ using Shared.Entities;
 
 namespace Admin.Client.Pages.RewardItems
 {
-    public partial class CreateRewardItem : FormComponentBase<CreateRewardItemInput>
+    public partial class CreateRewardItem : FormComponentBase<RewardItemInput>
     {
         [Inject] public IRewardItemApiClient ApiClient { get; set; } = default!;
         [Inject] public ISnackbar Snackbar { get; set; } = default!;
@@ -27,7 +27,7 @@ namespace Admin.Client.Pages.RewardItems
 
         private Task NewItem()
         {
-            base.InitializeEditContext(new CreateRewardItemInput());
+            base.InitializeEditContext(new RewardItemInput());
             return Task.CompletedTask;
         }
 
@@ -36,14 +36,14 @@ namespace Admin.Client.Pages.RewardItems
             var created = await ApiClient.CreateAsync(_formModel, _imageFile);
             _createdItem = created;
             Snackbar.Add($"優待商品『{created.ItemName}』を登録しました。", Severity.Success);
-            base.InitializeEditContext(new CreateRewardItemInput());
+            base.InitializeEditContext(new RewardItemInput());
             ResetImageSelection();
         }
 
         protected Task ResetForm()
         {
             ResetImageSelection();
-            return base.ResetForm(new CreateRewardItemInput());
+            return base.ResetForm(new RewardItemInput());
         }
 
         private void HandleImageFileChange(InputFileChangeEventArgs args)

@@ -5,7 +5,7 @@
 namespace Admin.Migrations
 {
     /// <inheritdoc />
-    public partial class AddRewardItemImagePath : Migration
+    public partial class Ver001 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

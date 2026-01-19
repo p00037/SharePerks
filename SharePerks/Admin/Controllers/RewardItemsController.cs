@@ -1,5 +1,5 @@
+using Admin.Client.Models;
 using Admin.Data;
-using Admin.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -43,7 +43,7 @@ public class RewardItemsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<RewardItem>> Create([FromForm] RewardItemRequest request)
+    public async Task<ActionResult<RewardItem>> Create([FromForm] RewardItemInput request)
     {
         if (await _unitOfWork.RewardItems.ExistsByItemCodeAsync(request.ItemCode))
         {
@@ -75,7 +75,7 @@ public class RewardItemsController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
-    public async Task<ActionResult<RewardItem>> Update(int id, [FromForm] RewardItemRequest request)
+    public async Task<ActionResult<RewardItem>> Update(int id, [FromForm] RewardItemInput request)
     {
         var entity = await _unitOfWork.RewardItems.GetByIdAsync(id);
         if (entity is null)
