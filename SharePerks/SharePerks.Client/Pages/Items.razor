@@ -1,0 +1,109 @@
+﻿@page "/items"
+@using System.Net.Http.Json
+@using Shared.Dtos
+@inject NavigationManager NavigationManager
+@inject HttpClient Http
+
+<PageTitle>優待商品選択</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">優待商品を選択</MudText>
+<MudText Typo="Typo.body1" Class="mb-4">
+    ご希望の優待商品を選択してください。選択後に住所入力へ進めます。
+</MudText>
+
+@if (isLoading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <MudAlert Severity="Severity.Error">@errorMessage</MudAlert>
+}
+else if (rewardItems.Count == 0)
+{
+    <MudAlert Severity="Severity.Info">現在選択できる優待商品がありません。</MudAlert>
+}
+else
+{
+    <MudGrid>
+        @foreach (var item in rewardItems)
+        {
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Class="@GetCardClass(item)" Elevation="@(IsSelected(item) ? 6 : 1)">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">@item.ItemName</MudText>
+                        <MudText Typo="Typo.body2" Class="mb-2">@item.ItemDescription</MudText>
+                        <MudChip Color="Color.Primary" Variant="Variant.Filled">必要ポイント: @item.RequiredPoints</MudChip>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton Variant="Variant.Filled" Color="@(IsSelected(item) ? Color.Primary : Color.Default)" OnClick="() => SelectItem(item)">
+                            @(IsSelected(item) ? "選択中" : "この商品を選択")
+                        </MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+        }
+    </MudGrid>
+}
+
+<MudDivider Class="my-6" />
+
+<MudStack Direction="Row" Justify="Justify.FlexEnd" Spacing="2">
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!IsItemSelected)" OnClick="MoveToAddress">
+        住所等の入力へ進む
+    </MudButton>
+</MudStack>
+
+@code {
+    private readonly List<RewardItemSummaryDto> rewardItems = new();
+    private int? selectedItemId;
+    private bool isLoading = true;
+    private string? errorMessage;
+
+    private bool IsItemSelected => selectedItemId.HasValue;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var items = await Http.GetFromJsonAsync<List<RewardItemSummaryDto>>("api/shareholder/items");
+            if (items is not null)
+            {
+                rewardItems.AddRange(items);
+            }
+        }
+        catch (Exception)
+        {
+            errorMessage = "優待商品の取得に失敗しました。時間をおいて再度お試しください。";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void SelectItem(RewardItemSummaryDto item)
+    {
+        selectedItemId = item.ItemId;
+    }
+
+    private bool IsSelected(RewardItemSummaryDto item)
+    {
+        return selectedItemId == item.ItemId;
+    }
+
+    private string GetCardClass(RewardItemSummaryDto item)
+    {
+        return IsSelected(item) ? "reward-card selected" : "reward-card";
+    }
+
+    private void MoveToAddress()
+    {
+        if (!IsItemSelected)
+        {
+            return;
+        }
+
+        NavigationManager.NavigateTo("/address");
+    }
+}

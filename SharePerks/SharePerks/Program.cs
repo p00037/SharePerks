@@ -10,6 +10,7 @@ using Shareholder.Client.Pages;
 using Shareholder.Components;
 using Shareholder.Components.Account;
 using Shareholder.Data;
+using Shared.Dtos;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -80,6 +81,7 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
     .AddDefaultTokenProviders();
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 var app = builder.Build();
 
@@ -114,6 +116,23 @@ app.MapRazorComponents<App>()
 
 // Add additional endpoints required by the Identity /Account Razor components.
 app.MapAdditionalIdentityEndpoints();
+
+app.MapGet("/api/shareholder/items", async (IUnitOfWork unitOfWork, CancellationToken cancellationToken) =>
+    {
+        var items = await unitOfWork.RewardItems.ListActiveAsync(cancellationToken);
+        var response = items
+            .Select(item => new RewardItemSummaryDto(
+                item.ItemId,
+                item.ItemCode,
+                item.ItemName,
+                item.ItemDescription,
+                item.RequiredPoints,
+                item.ImagePath))
+            .ToList();
+
+        return Results.Ok(response);
+    })
+    .RequireAuthorization(new AuthorizeAttribute { Roles = ApplicationRoles.User });
 
 try
 {

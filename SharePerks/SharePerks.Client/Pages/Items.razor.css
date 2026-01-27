@@ -1,0 +1,7 @@
+.reward-card {
+    height: 100%;
+}
+
+.reward-card.selected {
+    border: 2px solid var(--mud-palette-primary);
+}

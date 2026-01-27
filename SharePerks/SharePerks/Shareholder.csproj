@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SharePerks.Client\Shareholder.Client.csproj" />
+    <ProjectReference Include="..\..\Shared\Shared.csproj" />
   </ItemGroup>
 
 </Project>
