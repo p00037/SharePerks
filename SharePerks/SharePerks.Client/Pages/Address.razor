@@ -1,0 +1,41 @@
+﻿@page "/address"
+@inject NavigationManager NavigationManager
+
+<PageTitle>住所等の入力</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">住所等の入力</MudText>
+<MudText Typo="Typo.body1" Class="mb-4">
+    送付先情報をご入力ください。
+</MudText>
+
+<MudPaper Class="pa-4" Elevation="1">
+    <MudGrid>
+        <MudItem xs="12" sm="6">
+            <MudTextField Label="郵便番号" Placeholder="例: 123-4567" Variant="Variant.Outlined" />
+        </MudItem>
+        <MudItem xs="12" sm="6">
+            <MudTextField Label="電話番号" Placeholder="例: 03-1234-5678" Variant="Variant.Outlined" />
+        </MudItem>
+        <MudItem xs="12">
+            <MudTextField Label="住所1（都道府県・市区町村）" Variant="Variant.Outlined" />
+        </MudItem>
+        <MudItem xs="12">
+            <MudTextField Label="住所2（丁目・番地）" Variant="Variant.Outlined" />
+        </MudItem>
+        <MudItem xs="12">
+            <MudTextField Label="住所3（建物名・部屋番号）" Variant="Variant.Outlined" />
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+<MudStack Direction="Row" Justify="Justify.FlexEnd" Spacing="2" Class="mt-6">
+    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="MoveBack">戻る</MudButton>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary">確認へ進む</MudButton>
+</MudStack>
+
+@code {
+    private void MoveBack()
+    {
+        NavigationManager.NavigateTo("/items");
+    }
+}
