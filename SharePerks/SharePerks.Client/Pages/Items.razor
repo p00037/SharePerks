@@ -33,7 +33,7 @@ else
                     <MudCardContent>
                         <MudText Typo="Typo.h6">@item.ItemName</MudText>
                         <MudText Typo="Typo.body2" Class="mb-2">@item.ItemDescription</MudText>
-                        <MudChip Color="Color.Primary" Variant="Variant.Filled">必要ポイント: @item.RequiredPoints</MudChip>
+                        <MudChip T="string"  Color="Color.Primary" Variant="Variant.Filled">必要ポイント: @item.RequiredPoints</MudChip>
                     </MudCardContent>
                     <MudCardActions>
                         <MudButton Variant="Variant.Filled" Color="@(IsSelected(item) ? Color.Primary : Color.Default)" OnClick="() => SelectItem(item)">
