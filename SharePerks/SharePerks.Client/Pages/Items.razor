@@ -1,0 +1,146 @@
+﻿@page "/items"
+@using System.Net.Http.Json
+@using Shared.Dtos
+@using Shareholder.Client.Services
+@inject NavigationManager NavigationManager
+@inject HttpClient Http
+@inject RewardSelectionState SelectionState
+
+<PageTitle>優待商品選択</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">優待商品を選択</MudText>
+<MudText Typo="Typo.body1" Class="mb-4">
+    ご希望の優待商品を選択してください。選択後に住所入力へ進めます。
+</MudText>
+
+@if (isLoading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <MudAlert Severity="Severity.Error">@errorMessage</MudAlert>
+}
+else if (rewardItems.Count == 0)
+{
+    <MudAlert Severity="Severity.Info">現在選択できる優待商品がありません。</MudAlert>
+}
+else
+{
+    <MudGrid>
+        @foreach (var item in rewardItems)
+        {
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Class="@GetCardClass(item)" Elevation="@(IsSelected(item) ? 6 : 1)">
+                    <MudCardMedia Image="@GetImagePath(item)" Height="180px" />
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">@item.ItemName</MudText>
+                        <MudText Typo="Typo.body2" Class="mb-2">@item.ItemDescription</MudText>
+                        <MudChip Color="Color.Primary" Variant="Variant.Filled">必要ポイント: @item.RequiredPoints</MudChip>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudNumericField T="int" Label="数量" Min="0" Max="99" Value="@GetQuantity(item)" ValueChanged="value => UpdateQuantity(item, value)" />
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+        }
+    </MudGrid>
+}
+
+<MudDivider Class="my-6" />
+
+@if (TotalPoints > AvailablePoints)
+{
+    <MudAlert Severity="Severity.Error" Class="mb-3">選択した合計ポイントが使用可能ポイントを超えています。</MudAlert>
+}
+
+<MudStack Direction="Row" Justify="Justify.SpaceBetween" Spacing="2">
+    <MudText Typo="Typo.body2">合計ポイント: @TotalPoints / @AvailablePoints</MudText>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!CanProceed)" OnClick="MoveToAddress">
+        住所等の入力へ進む
+    </MudButton>
+</MudStack>
+
+@code {
+    private readonly List<RewardItemSummaryDto> rewardItems = new();
+    private bool isLoading = true;
+    private string? errorMessage;
+    private readonly Dictionary<int, int> quantityByItemId = new();
+    private const int AvailablePoints = 5000;
+
+    private int TotalPoints => rewardItems.Sum(item => item.RequiredPoints * GetQuantity(item));
+
+    private bool CanProceed => TotalPoints > 0 && TotalPoints <= AvailablePoints;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var items = await Http.GetFromJsonAsync<List<RewardItemSummaryDto>>("api/shareholder/items");
+            if (items is not null)
+            {
+                rewardItems.AddRange(items);
+            }
+        }
+        catch (Exception)
+        {
+            errorMessage = "優待商品の取得に失敗しました。時間をおいて再度お試しください。";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private bool IsSelected(RewardItemSummaryDto item)
+    {
+        return GetQuantity(item) > 0;
+    }
+
+    private string GetCardClass(RewardItemSummaryDto item)
+    {
+        return IsSelected(item) ? "reward-card selected" : "reward-card";
+    }
+
+    private string GetImagePath(RewardItemSummaryDto item)
+    {
+        return string.IsNullOrWhiteSpace(item.ImagePath) ? "images/reward-placeholder.svg" : item.ImagePath;
+    }
+
+    private int GetQuantity(RewardItemSummaryDto item)
+    {
+        return quantityByItemId.TryGetValue(item.ItemId, out var quantity) ? quantity : 0;
+    }
+
+    private void UpdateQuantity(RewardItemSummaryDto item, int quantity)
+    {
+        if (quantity <= 0)
+        {
+            quantityByItemId.Remove(item.ItemId);
+            return;
+        }
+
+        quantityByItemId[item.ItemId] = quantity;
+    }
+
+    private void MoveToAddress()
+    {
+        if (!CanProceed)
+        {
+            return;
+        }
+
+        var selectedItems = rewardItems
+            .Select(item => new SelectedRewardItem(
+                item.ItemId,
+                item.ItemName,
+                item.ImagePath,
+                item.RequiredPoints,
+                GetQuantity(item)))
+            .Where(item => item.Quantity > 0)
+            .ToList();
+
+        SelectionState.SetSelection(selectedItems);
+        NavigationManager.NavigateTo("/address");
+    }
+}
