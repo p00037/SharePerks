@@ -6,7 +6,7 @@
 @inject HttpClient Http
 @inject RewardSelectionState SelectionState
 
-<PageTitle>優待商品選択</PageTitle>
+@* <PageTitle>優待商品選択</PageTitle>
 
 <MudText Typo="Typo.h4" GutterBottom="true">優待商品を選択</MudText>
 <MudText Typo="Typo.body1" Class="mb-4">
@@ -32,11 +32,11 @@ else
         {
             <MudItem xs="12" sm="6" md="4">
                 <MudCard Class="@GetCardClass(item)" Elevation="@(IsSelected(item) ? 6 : 1)">
-                    <MudCardMedia Image="@GetImagePath(item)" Height="180px" />
+                    <MudCardMedia Image="@GetImagePath(item)" Height="180" />
                     <MudCardContent>
                         <MudText Typo="Typo.h6">@item.ItemName</MudText>
                         <MudText Typo="Typo.body2" Class="mb-2">@item.ItemDescription</MudText>
-                        <MudChip Color="Color.Primary" Variant="Variant.Filled">必要ポイント: @item.RequiredPoints</MudChip>
+                        <MudChip T="string" Color="Color.Primary" Variant="Variant.Filled">必要ポイント: @item.RequiredPoints</MudChip>
                     </MudCardContent>
                     <MudCardActions>
                         <MudNumericField T="int" Label="数量" Min="0" Max="99" Value="@GetQuantity(item)" ValueChanged="value => UpdateQuantity(item, value)" />
@@ -60,6 +60,82 @@ else
         住所等の入力へ進む
     </MudButton>
 </MudStack>
+ *@
+
+<PageTitle>優待商品選択</PageTitle>
+
+<MudGrid Class="mb-6">
+
+    <MudItem xs="12" md="8">
+        <MudPaper Class="pa-6" Elevation="1">
+            <MudStack>
+                <MudStack>
+                    <MudText Typo="Typo.h5">優待商品を選択</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">ご希望の優待商品を選択してください。選択後に住所入力へ進めます。</MudText>
+                </MudStack>
+
+                @if (!string.IsNullOrWhiteSpace(errorMessage))
+                {
+                    <MudAlert Severity="Severity.Error" Variant="Variant.Filled">
+                        @errorMessage
+                    </MudAlert>
+                }
+
+                <EditForm Model="rewardItems" OnSubmit="MoveToAddress">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    @if (isLoading)
+                    {
+                        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                    }
+                    else if (!string.IsNullOrWhiteSpace(errorMessage))
+                    {
+                        <MudAlert Severity="Severity.Error">@errorMessage</MudAlert>
+                    }
+                    else if (rewardItems.Count == 0)
+                    {
+                        <MudAlert Severity="Severity.Info">現在選択できる優待商品がありません。</MudAlert>
+                    }
+                    else
+                    {
+                        <MudGrid>
+                            @foreach (var item in rewardItems)
+                            {
+                                <MudItem xs="12" sm="6" md="4">
+                                    <MudCard Class="@GetCardClass(item)" Elevation="@(IsSelected(item) ? 6 : 1)">
+                                        <MudCardMedia Image="@GetImagePath(item)" Height="180" />
+                                        <MudCardContent>
+                                            <MudText Typo="Typo.h6">@item.ItemName</MudText>
+                                            <MudText Typo="Typo.body2" Class="mb-2">@item.ItemDescription</MudText>
+                                            <MudChip T="string" Color="Color.Primary" Variant="Variant.Filled">必要ポイント: @item.RequiredPoints</MudChip>
+                                        </MudCardContent>
+                                        <MudCardActions>
+                                            <MudNumericField T="int" Label="数量" Min="0" Max="99" Value="@GetQuantity(item)" ValueChanged="value => UpdateQuantity(item, value)" />
+                                        </MudCardActions>
+                                    </MudCard>
+                                </MudItem>
+                            }
+                        </MudGrid>
+                    }
+
+
+                    <MudStack Row="true" Spacing="2" Class="mt-4">
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   ButtonType="ButtonType.Submit">
+                            住所等の入力へ進む
+                        </MudButton>
+                    </MudStack>
+                </EditForm>
+            </MudStack>
+        </MudPaper>
+    </MudItem>
+
+    <MudItem xs="12" md="4">
+        @* 右コンテンツ *@
+    </MudItem>
+</MudGrid>
 
 @code {
     private readonly List<RewardItemSummaryDto> rewardItems = new();

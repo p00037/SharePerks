@@ -1,0 +1,64 @@
+﻿<h3>Sample</h3>
+
+@code {
+
+}
+
+@* <PageTitle>優待商品登録</PageTitle>
+
+<MudGrid Class="mb-6">
+
+    <MudItem xs="12" md="8">
+        <MudPaper Class="pa-6" Elevation="1">
+            <MudStack>
+                <MudStack>
+                    <MudText Typo="Typo.h5">優待商品マスタ登録</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">優待商品コードと必要ポイントを入力して商品を登録します。</MudText>
+                </MudStack>
+
+                @if (!string.IsNullOrWhiteSpace(_serverErrorMessage))
+                {
+                    <MudAlert Severity="Severity.Error" Variant="Variant.Filled">
+                        @_serverErrorMessage
+                    </MudAlert>
+                }
+
+                <EditForm EditContext="_editContext" OnValidSubmit="HandleValidSubmit">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <MudGrid>
+                        @{
+                            //メインコンテンツ 
+                        }
+                    </MudGrid>
+
+                    <MudStack Row="true" Spacing="2" Class="mt-4">
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   ButtonType="ButtonType.Submit">
+                            登録する
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Secondary"
+                                   OnClick="HandleResetForm">
+                            入力をクリア
+                        </MudButton>
+                        <MudButton Variant="Variant.Text"
+                                   Color="Color.Default"
+                                   Href="reward-items">
+                            一覧へ戻る
+
+                        </MudButton>
+                    </MudStack>
+                </EditForm>
+            </MudStack>
+        </MudPaper>
+    </MudItem>
+
+    <MudItem xs="12" md="4">
+        @{
+            //右コンテンツ
+        }
+    </MudItem>
+</MudGrid> *@
