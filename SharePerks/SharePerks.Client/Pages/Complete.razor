@@ -1,0 +1,32 @@
+@page "/complete"
+@inject NavigationManager NavigationManager
+
+<PageTitle>申込完了</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
+    <MudPaper Class="pa-6" Elevation="1">
+        <MudText Typo="Typo.h5" Class="mb-2">申込が完了しました</MudText>
+        <MudText Typo="Typo.body1" Class="mb-4">お申し込みありがとうございました。</MudText>
+
+        @if (OrderId.HasValue)
+        {
+            <MudAlert Severity="Severity.Success" Variant="Variant.Filled" Dense="true">
+                受付番号: @OrderId.Value
+            </MudAlert>
+        }
+
+        <MudStack Row="true" Class="mt-4">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="MoveHome">トップへ戻る</MudButton>
+        </MudStack>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    [SupplyParameterFromQuery(Name = "orderId")]
+    public int? OrderId { get; set; }
+
+    private void MoveHome()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+}
