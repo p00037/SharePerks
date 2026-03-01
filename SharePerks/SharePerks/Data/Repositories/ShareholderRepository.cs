@@ -10,11 +10,7 @@ public sealed class ShareholderRepository(ApplicationDbContext dbContext) : ISha
     public Task<Shareholder?> GetByUserIdAsync(string userId, CancellationToken cancellationToken = default)
     {
         return dbContext.Set<Shareholder>()
+            .AsNoTracking()
             .SingleOrDefaultAsync(x => x.UserId == userId && x.IsActive, cancellationToken);
-    }
-
-    public void Update(Shareholder shareholder)
-    {
-        dbContext.Set<Shareholder>().Update(shareholder);
     }
 }
