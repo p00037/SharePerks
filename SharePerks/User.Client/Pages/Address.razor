@@ -1,0 +1,98 @@
+@page "/address"
+@using User.Client.Services
+@inject NavigationManager NavigationManager
+@inject RewardSelectionState SelectionState
+
+<PageTitle>住所等の入力</PageTitle>
+
+<MudGrid Class="mb-6">
+    <MudItem xs="12" md="8">
+        <MudPaper Class="pa-6" Elevation="1">
+            <MudStack>
+                <MudStack>
+                    <MudText Typo="Typo.h5">住所等の入力</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">送付先情報をご入力ください。</MudText>
+                </MudStack>
+
+                @if (SelectionState.SelectedItems.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Warning" Class="mb-4">優待商品が選択されていません。先に商品を選択してください。</MudAlert>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="MoveBack">優待商品選択へ戻る</MudButton>
+                }
+                else
+                {
+                    <EditForm Model="addressInput" OnValidSubmit="MoveToConfirm">
+                        <DataAnnotationsValidator />
+
+                        <MudPaper Class="pa-4 mb-6" Elevation="1">
+                            <MudText Typo="Typo.h6" Class="mb-2">選択した優待商品</MudText>
+                            <MudList T="string" Dense="true">
+                                @foreach (var item in SelectionState.SelectedItems)
+                                {
+                                    <MudListItem Text="@($"{item.ItemName}（数量: {item.Quantity} / 必要ポイント: {item.RequiredPoints}）")" />
+                                }
+                            </MudList>
+                            <MudText Typo="Typo.body2">合計ポイント: @SelectionState.TotalPoints</MudText>
+                        </MudPaper>
+
+                        <MudPaper Class="pa-4" Elevation="1">
+                            <MudGrid>
+                                <MudItem xs="12" sm="6">
+                                    <MudTextField T="string" Label="郵便番号" Placeholder="例: 123-4567" Variant="Variant.Outlined" @bind-Value="addressInput.PostalCode" Required="true" />
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudTextField T="string" Label="電話番号" Placeholder="例: 03-1234-5678" Variant="Variant.Outlined" @bind-Value="addressInput.PhoneNumber" Required="true" />
+                                </MudItem>
+                                <MudItem xs="12">
+                                    <MudTextField T="string" Label="住所1（都道府県・市区町村）" Variant="Variant.Outlined" @bind-Value="addressInput.Address1" Required="true" />
+                                </MudItem>
+                                <MudItem xs="12">
+                                    <MudTextField T="string" Label="住所2（丁目・番地）" Variant="Variant.Outlined" @bind-Value="addressInput.Address2" Required="true" />
+                                </MudItem>
+                                <MudItem xs="12">
+                                    <MudTextField T="string" Label="住所3（建物名・部屋番号）" Variant="Variant.Outlined" @bind-Value="addressInput.Address3" />
+                                </MudItem>
+                            </MudGrid>
+                        </MudPaper>
+
+                        <MudStack Row="true" Spacing="2" Class="mt-4">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" ButtonType="ButtonType.Submit">
+                                確認へ進む
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="MoveBack">
+                                戻る
+                            </MudButton>
+                        </MudStack>
+                    </EditForm>
+                }
+            </MudStack>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private AddressInput addressInput = new();
+
+    protected override void OnInitialized()
+    {
+        addressInput = new AddressInput
+        {
+            PostalCode = SelectionState.Address.PostalCode,
+            PhoneNumber = SelectionState.Address.PhoneNumber,
+            Address1 = SelectionState.Address.Address1,
+            Address2 = SelectionState.Address.Address2,
+            Address3 = SelectionState.Address.Address3
+        };
+    }
+
+    private void MoveBack()
+    {
+        NavigationManager.NavigateTo("/items");
+    }
+
+    private void MoveToConfirm()
+    {
+        SelectionState.SetAddress(addressInput);
+        NavigationManager.NavigateTo("/confirm");
+    }
+}

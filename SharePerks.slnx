@@ -2,6 +2,6 @@
   <Project Path="Shared/Shared.csproj" />
   <Project Path="SharePerks/Admin.Client/Admin.Client.csproj" />
   <Project Path="SharePerks/Admin/Admin.csproj" />
-  <Project Path="SharePerks/SharePerks.Client/Shareholder.Client.csproj" />
-  <Project Path="SharePerks/SharePerks/Shareholder.csproj" />
+  <Project Path="SharePerks/User.Client/User.Client.csproj" />
+  <Project Path="SharePerks/User/User.csproj" />
 </Solution>
