@@ -1,6 +1,7 @@
 @page "/confirm"
 @using User.Client.Services
 @using Shared.Dtos
+@implements IDisposable
 @inject NavigationManager NavigationManager
 @using User.Client.Services.Api.Exceptions
 @using User.Client.Services.Api.Interface
@@ -18,19 +19,33 @@
 
                 @if (!string.IsNullOrWhiteSpace(errorMessage))
                 {
-                    <MudAlert Severity="Severity.Error">@errorMessage</MudAlert>
+                    <MudAlert Severity="Severity.Error">
+                        <MudText>@errorMessage</MudText>
+                        @if (validationErrors != null && validationErrors.Any())
+                        {
+                            <ul class="mt-2">
+                                @foreach (var error in validationErrors.Values.SelectMany(x => x))
+                                {
+                                    <li><MudText Typo="Typo.body2">@error</MudText></li>
+                                }
+                            </ul>
+                        }
+                    </MudAlert>
                 }
 
-                <MudPaper Class="pa-4" Elevation="1">
+                <MudPaper Class="pa-4" Elevation="1" Outlined="true">
                     <MudText Typo="Typo.h6" Class="mb-2">送付先情報</MudText>
                     <MudText Typo="Typo.body2">郵便番号: @SelectionState.Address.PostalCode</MudText>
                     <MudText Typo="Typo.body2">電話番号: @SelectionState.Address.PhoneNumber</MudText>
                     <MudText Typo="Typo.body2">住所1: @SelectionState.Address.Address1</MudText>
                     <MudText Typo="Typo.body2">住所2: @SelectionState.Address.Address2</MudText>
-                    <MudText Typo="Typo.body2">住所3: @(string.IsNullOrWhiteSpace(SelectionState.Address.Address3) ? "-" : SelectionState.Address.Address3)</MudText>
+                    @if (!string.IsNullOrWhiteSpace(SelectionState.Address.Address3))
+                    {
+                        <MudText Typo="Typo.body2">住所3: @SelectionState.Address.Address3</MudText>
+                    }
                 </MudPaper>
 
-                <MudPaper Class="pa-4" Elevation="1">
+                <MudPaper Class="pa-4" Elevation="1" Outlined="true">
                     <MudText Typo="Typo.h6" Class="mb-2">申込商品</MudText>
                     <MudList T="string" Dense="true">
                         @foreach (var item in SelectionState.SelectedItems)
@@ -38,14 +53,15 @@
                             <MudListItem Text="@($"{item.ItemName}（数量: {item.Quantity} / 小計: {item.RequiredPoints * item.Quantity}pt）")" />
                         }
                     </MudList>
-                    <MudText Typo="Typo.body1">合計ポイント: @SelectionState.TotalPoints</MudText>
+                    <MudDivider Class="my-2" />
+                    <MudText Typo="Typo.subtitle1" Align="Align.Right">合計ポイント: <b>@SelectionState.TotalPoints pt</b></MudText>
                 </MudPaper>
 
-                <MudCheckBox T="bool" @bind-Value="isAgreed" Label="内容を確認し、申し込みに同意します。" />
+                <MudCheckBox T="bool" @bind-Value="isAgreed" Label="内容を確認し、申し込みに同意します。" Color="Color.Primary" />
 
                 <MudStack Row="true" Spacing="2" Class="mt-4">
                     <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!CanSubmit || isSubmitting)" OnClick="SubmitOrderAsync">
-                        申し込みを確定する
+                        @(isSubmitting ? "処理中..." : "申し込みを確定する")
                     </MudButton>
                     <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Disabled="@isSubmitting" OnClick="MoveToAddress">
                         入力画面へ戻る
@@ -60,6 +76,8 @@
     private bool isAgreed;
     private bool isSubmitting;
     private string? errorMessage;
+    private IReadOnlyDictionary<string, string[]>? validationErrors;
+    private readonly CancellationTokenSource cts = new();
 
     private bool CanSubmit => SelectionState.SelectedItems.Count > 0
                               && !string.IsNullOrWhiteSpace(SelectionState.Address.PostalCode)
@@ -76,10 +94,11 @@
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(SelectionState.Address.PostalCode)
-            || string.IsNullOrWhiteSpace(SelectionState.Address.Address1)
-            || string.IsNullOrWhiteSpace(SelectionState.Address.Address2)
-            || string.IsNullOrWhiteSpace(SelectionState.Address.PhoneNumber))
+        var addr = SelectionState.Address;
+        if (string.IsNullOrWhiteSpace(addr.PostalCode)
+            || string.IsNullOrWhiteSpace(addr.Address1)
+            || string.IsNullOrWhiteSpace(addr.Address2)
+            || string.IsNullOrWhiteSpace(addr.PhoneNumber))
         {
             NavigationManager.NavigateTo("/address");
         }
@@ -92,13 +111,14 @@
 
     private async Task SubmitOrderAsync()
     {
-        if (!CanSubmit)
+        if (!CanSubmit || isSubmitting)
         {
             return;
         }
 
         isSubmitting = true;
         errorMessage = null;
+        validationErrors = null;
 
         var request = new CreateRewardOrderRequestDto(
             SelectionState.Address.PostalCode,
@@ -110,22 +130,32 @@
 
         try
         {
-            var result = await OrderApiClient.CreateAsync(request);
+            var result = await OrderApiClient.CreateAsync(request, cts.Token);
             SelectionState.Clear();
             NavigationManager.NavigateTo($"/complete?orderId={result.OrderId}");
-            return;
         }
         catch (ApiValidationException ex)
         {
             errorMessage = ex.Message;
+            validationErrors = ex.Errors;
         }
-        catch
+        catch (OperationCanceledException)
         {
-            errorMessage = "申し込み登録に失敗しました。時間をおいて再度お試しください。";
+            // キャンセル時は何もしない
+        }
+        catch (Exception)
+        {
+            errorMessage = "申し込み登録に失敗しました。通信状況を確認し、時間をおいて再度お試しください。";
         }
         finally
         {
             isSubmitting = false;
         }
+    }
+
+    public void Dispose()
+    {
+        cts.Cancel();
+        cts.Dispose();
     }
 }

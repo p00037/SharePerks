@@ -33,11 +33,11 @@ public sealed record SelectedRewardItem(
     int Quantity
 );
 
-public sealed class AddressInput
+public sealed record AddressInput
 {
-    public string PostalCode { get; set; } = string.Empty;
-    public string PhoneNumber { get; set; } = string.Empty;
-    public string Address1 { get; set; } = string.Empty;
-    public string Address2 { get; set; } = string.Empty;
-    public string? Address3 { get; set; }
+    public string PostalCode { get; init; } = string.Empty;
+    public string PhoneNumber { get; init; } = string.Empty;
+    public string Address1 { get; init; } = string.Empty;
+    public string Address2 { get; init; } = string.Empty;
+    public string? Address3 { get; init; }
 }
