@@ -7,7 +7,6 @@ namespace User.Client.Pages
     public partial class Confirm
     {
         private bool isAgreed;
-        private bool isSubmitting;
 
         private bool CanSubmit => SelectionState.SelectedItems.Count > 0
                                   && !string.IsNullOrWhiteSpace(SelectionState.Address.PostalCode)
@@ -47,7 +46,6 @@ namespace User.Client.Pages
                     return;
                 }
 
-                isSubmitting = true;
                 _serverErrorMessage = null;
 
                 var request = new CreateRewardOrderRequestDto(
