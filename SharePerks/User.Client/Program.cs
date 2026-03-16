@@ -6,8 +6,14 @@ using User.Client.Services.Api.Interface;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
-builder.Services.AddScoped(_ => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
+
 builder.Services.AddMudServices();
+
+// Overlayサービス
+builder.Services.AddScoped<OverlayState>();
+
+// Apiサービス
+builder.Services.AddScoped(_ => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 builder.Services.AddScoped<RewardSelectionState>();
 builder.Services.AddScoped<IShareholderOrderApiClient, ShareholderOrderApiClient>();
 
