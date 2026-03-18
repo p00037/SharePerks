@@ -46,7 +46,9 @@ namespace User.Client.Components
             InvokeAsync(StateHasChanged);
         }
 
-        protected async Task RunAsync(Func<Task> func, string dafaultErrorMessage = "処理に失敗しました。もう一度お試しください")
+        protected async Task RunAsync(
+                   Func<Task> func,
+                   string defaultErrorMessage = "処理に失敗しました。もう一度お試しください")
         {
             if (!OperatingSystem.IsBrowser())
             {
@@ -66,13 +68,21 @@ namespace User.Client.Components
             }
             catch (ApiValidationException ex)
             {
-                ApplyServerValidationErrors(ex.Errors);
-                //_serverErrorMessage = ex.Message;
-                _serverErrorMessage = string.Join("\n", ex.Errors.Where(x => string.IsNullOrEmpty(x.Key)).SelectMany(x => x.Value));
+                var pageLevelErrors = ApplyServerValidationErrors(ex.Errors);
+
+                // キーなし + UIにマップできなかったキー付きエラーを上部表示へ
+                var topErrors = ex.Errors
+                    .Where(x => string.IsNullOrWhiteSpace(x.Key))
+                    .SelectMany(x => x.Value)
+                    .Concat(pageLevelErrors)
+                    .Distinct()
+                    .ToArray();
+
+                _serverErrorMessage = string.Join(Environment.NewLine, topErrors);
             }
             catch (Exception ex)
             {
-                _serverErrorMessage = dafaultErrorMessage;
+                _serverErrorMessage = defaultErrorMessage;
                 Console.Error.WriteLine(ex);
             }
             finally
@@ -82,31 +92,60 @@ namespace User.Client.Components
             }
         }
 
-        protected async Task Run(Action onValidSubmit, string dafaultErrorMessage = "処理に失敗しました。もう一度お試しください")
+        protected async Task Run(Action onValidSubmit, string defaultErrorMessage = "処理に失敗しました。もう一度お試しください")
         {
             await RunAsync(async () =>
             {
                 onValidSubmit();
                 await Task.CompletedTask;
-            }, dafaultErrorMessage);
+            }, defaultErrorMessage);
         }
 
-        private void ApplyServerValidationErrors(IReadOnlyDictionary<string, string[]> errors)
+        /// <summary>
+        /// UIのフィールドに関連付けできなかったエラーを返す
+        /// </summary>
+        private IReadOnlyList<string> ApplyServerValidationErrors(IReadOnlyDictionary<string, string[]> errors)
         {
+            var pageLevelErrors = new List<string>();
+
             if (_editContext is null || _messageStore is null)
             {
-                return;
+                return errors.SelectMany(x => x.Value).ToArray();
             }
 
             _messageStore.Clear();
 
             foreach (var (fieldName, messages) in errors)
             {
-                var identifier = new FieldIdentifier(_editContext.Model, fieldName);
-                _messageStore.Add(identifier, messages);
+                if (string.IsNullOrWhiteSpace(fieldName))
+                {
+                    pageLevelErrors.AddRange(messages);
+                    continue;
+                }
+
+                if (CanMapToField(fieldName))
+                {
+                    var identifier = new FieldIdentifier(_editContext.Model, fieldName);
+                    _messageStore.Add(identifier, messages);
+                }
+                else
+                {
+                    // キー付きだがUIのValidationMessageで拾えないものは上部へ
+                    pageLevelErrors.AddRange(messages);
+                }
             }
 
             _editContext.NotifyValidationStateChanged();
+            return pageLevelErrors;
+        }
+
+        /// <summary>
+        /// 最低限の判定。必要ならAPIキー→UIフィールド名の変換テーブルに置き換える
+        /// </summary>
+        private bool CanMapToField(string fieldName)
+        {
+            // 単純なプロパティ名のみ許可する例
+            return typeof(TModel).GetProperty(fieldName) is not null;
         }
 
         protected virtual Task ResetForm(TModel formModel)
