@@ -5,7 +5,7 @@ using User.Client.Services.Api.Exceptions;
 
 namespace User.Client.Components
 {
-    public class FormComponentBase<TModel> : Microsoft.AspNetCore.Components.ComponentBase, IDisposable where TModel : class, new()
+    public class FormComponentBase<TModel> : ComponentBase, IDisposable where TModel : class, new()
     {
         [Inject] public OverlayState Overlay { get; set; } = default!;
 
