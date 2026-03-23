@@ -1,9 +1,11 @@
 ﻿@inherits LayoutComponentBase
+@inject OverlayState Overlay;
 
 <MudThemeProvider />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
+
 <MudLayout>
     <MudAppBar Elevation="1">
         <MudStaticNavDrawerToggle DrawerId="nav-drawer" Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" />
@@ -28,6 +30,16 @@
 
 @code {
     private bool _drawerOpen = true;
+    protected override void OnInitialized()
+    {
+
+        Overlay.OnChange += HandleOverlayChanged;
+    }
+
+    private void HandleOverlayChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
 }
 
 

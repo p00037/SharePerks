@@ -6,11 +6,15 @@ using MudBlazor.Services;
 using Serilog;
 using Serilog.Sinks.MSSqlServer;
 using User.Client.Pages;
+using User.Client.Services;
 using User.Components;
 using User.Components.Account;
 using User.Data;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Overlayサービス
+builder.Services.AddScoped<OverlayState>();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 

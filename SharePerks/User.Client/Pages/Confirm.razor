@@ -1,11 +1,15 @@
 @page "/confirm"
 @using User.Client.Services
+@using User.Client.Components
 @using Shared.Dtos
-@inject NavigationManager NavigationManager
 @using User.Client.Services.Api.Exceptions
 @using User.Client.Services.Api.Interface
+
+@inject NavigationManager NavigationManager
 @inject IShareholderOrderApiClient OrderApiClient
 @inject RewardSelectionState SelectionState
+
+@inherits FormComponentBase<RewardSelectionState>
 
 <PageTitle>申込内容確認</PageTitle>
 
@@ -16,9 +20,13 @@
                 <MudText Typo="Typo.h5">申込内容確認</MudText>
                 <MudText Typo="Typo.body2" Color="Color.Secondary">内容をご確認のうえ、申し込みを確定してください。</MudText>
 
-                @if (!string.IsNullOrWhiteSpace(errorMessage))
+                @if (!string.IsNullOrWhiteSpace(_serverErrorMessage))
                 {
-                    <MudAlert Severity="Severity.Error">@errorMessage</MudAlert>
+                    <MudAlert Severity="Severity.Error" Dense="true" NoIcon="true">
+                        <div style="max-height: 180px; overflow-y: auto; white-space: pre-line;">
+                            @_serverErrorMessage
+                        </div>
+                    </MudAlert>
                 }
 
                 <MudPaper Class="pa-4" Elevation="1">
@@ -44,10 +52,10 @@
                 <MudCheckBox T="bool" @bind-Value="isAgreed" Label="内容を確認し、申し込みに同意します。" />
 
                 <MudStack Row="true" Spacing="2" Class="mt-4">
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!CanSubmit || isSubmitting)" OnClick="SubmitOrderAsync">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!CanSubmit)" OnClick="SubmitOrderAsync">
                         申し込みを確定する
                     </MudButton>
-                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Disabled="@isSubmitting" OnClick="MoveToAddress">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="MoveToAddress">
                         入力画面へ戻る
                     </MudButton>
                 </MudStack>
@@ -56,76 +64,4 @@
     </MudItem>
 </MudGrid>
 
-@code {
-    private bool isAgreed;
-    private bool isSubmitting;
-    private string? errorMessage;
 
-    private bool CanSubmit => SelectionState.SelectedItems.Count > 0
-                              && !string.IsNullOrWhiteSpace(SelectionState.Address.PostalCode)
-                              && !string.IsNullOrWhiteSpace(SelectionState.Address.Address1)
-                              && !string.IsNullOrWhiteSpace(SelectionState.Address.Address2)
-                              && !string.IsNullOrWhiteSpace(SelectionState.Address.PhoneNumber)
-                              && isAgreed;
-
-    protected override void OnInitialized()
-    {
-        if (SelectionState.SelectedItems.Count == 0)
-        {
-            NavigationManager.NavigateTo("/items");
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(SelectionState.Address.PostalCode)
-            || string.IsNullOrWhiteSpace(SelectionState.Address.Address1)
-            || string.IsNullOrWhiteSpace(SelectionState.Address.Address2)
-            || string.IsNullOrWhiteSpace(SelectionState.Address.PhoneNumber))
-        {
-            NavigationManager.NavigateTo("/address");
-        }
-    }
-
-    private void MoveToAddress()
-    {
-        NavigationManager.NavigateTo("/address");
-    }
-
-    private async Task SubmitOrderAsync()
-    {
-        if (!CanSubmit)
-        {
-            return;
-        }
-
-        isSubmitting = true;
-        errorMessage = null;
-
-        var request = new CreateRewardOrderRequestDto(
-            SelectionState.Address.PostalCode,
-            SelectionState.Address.Address1,
-            SelectionState.Address.Address2,
-            SelectionState.Address.Address3,
-            SelectionState.Address.PhoneNumber,
-            SelectionState.SelectedItems.Select(x => new CreateRewardOrderItemRequestDto(x.ItemId, x.Quantity)).ToList());
-
-        try
-        {
-            var result = await OrderApiClient.CreateAsync(request);
-            SelectionState.Clear();
-            NavigationManager.NavigateTo($"/complete?orderId={result.OrderId}");
-            return;
-        }
-        catch (ApiValidationException ex)
-        {
-            errorMessage = ex.Message;
-        }
-        catch
-        {
-            errorMessage = "申し込み登録に失敗しました。時間をおいて再度お試しください。";
-        }
-        finally
-        {
-            isSubmitting = false;
-        }
-    }
-}
