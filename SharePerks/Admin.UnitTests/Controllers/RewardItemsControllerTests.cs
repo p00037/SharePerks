@@ -29,9 +29,7 @@ namespace Admin.Controllers.UnitTests;
 public partial class RewardItemsControllerTests
 {
     /// <summary>
-    /// The List action should return an OkObjectResult with an empty list when the repository returns an empty list.
-    /// Conditions: repository returns an empty List&lt;RewardItem&gt;.
-    /// Expected: OkObjectResult returned and the Value is an empty List&lt;RewardItem&gt;.
+    /// List はリポジトリが空リストを返した場合に、空リストを含む OkObjectResult を返す。
     /// </summary>
     [TestMethod]
     public async Task List_RepositoryReturnsEmptyList_ReturnsOkWithEmptyList()
@@ -40,7 +38,7 @@ public partial class RewardItemsControllerTests
         var items = new List<RewardItem>();
 
         var repoMock = new Mock<IRewardItemRepository>(MockBehavior.Strict);
-        repoMock.Setup(r => r.ListAsync(It.IsAny<CancellationToken>())).ReturnsAsync(items);
+        repoMock.Setup(r => r.ListAsync(default)).ReturnsAsync(items);
 
         var uowMock = new Mock<IUnitOfWork>(MockBehavior.Strict);
         uowMock.SetupGet(u => u.RewardItems).Returns(repoMock.Object);
@@ -57,22 +55,45 @@ public partial class RewardItemsControllerTests
         Assert.IsInstanceOfType(actionResult.Result, typeof(OkObjectResult));
         var ok = actionResult.Result as OkObjectResult;
         var returned = ok?.Value as List<RewardItem>;
-        Assert.IsNotNull(returned, "Expected an empty list instance, not null");
-        Assert.AreEqual(0, returned.Count, "Expected the returned list to be empty");
-        repoMock.Verify(r => r.ListAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.IsNotNull(returned, "空リストでも null ではなくリストインスタンスが返ること");
+        Assert.IsEmpty(returned, "返却されたリストが空であること");
+        repoMock.Verify(r => r.ListAsync(default), Times.Once);
+        repoMock.VerifyNoOtherCalls();
     }
 
     /// <summary>
-    /// The List action should return an OkObjectResult with a null Value when the repository returns null.
-    /// Conditions: repository returns null (unexpected but possible).
-    /// Expected: OkObjectResult returned and Value is null.
+    /// List はリポジトリが複数件のデータを返した場合に、そのまま OkObjectResult として返す。
     /// </summary>
     [TestMethod]
-    public async Task List_RepositoryReturnsNull_ReturnsOkWithNullValue()
+    public async Task List_RepositoryReturnsItems_ReturnsOkWithItems()
     {
         // Arrange
+        var items = new List<RewardItem>
+        {
+            new()
+            {
+                ItemId = 1,
+                ItemCode = "ITEM001",
+                ItemName = "特典A",
+                ItemDescription = "説明A",
+                RequiredPoints = 100,
+                DisplayOrder = 1,
+                IsActive = true
+            },
+            new()
+            {
+                ItemId = 2,
+                ItemCode = "ITEM002",
+                ItemName = "特典B",
+                ItemDescription = "説明B",
+                RequiredPoints = 200,
+                DisplayOrder = 2,
+                IsActive = false
+            }
+        };
+
         var repoMock = new Mock<IRewardItemRepository>(MockBehavior.Strict);
-        repoMock.Setup(r => r.ListAsync(It.IsAny<CancellationToken>())).ReturnsAsync((List<RewardItem>?)null);
+        repoMock.Setup(r => r.ListAsync(default)).ReturnsAsync(items);
 
         var uowMock = new Mock<IUnitOfWork>(MockBehavior.Strict);
         uowMock.SetupGet(u => u.RewardItems).Returns(repoMock.Object);
@@ -88,8 +109,11 @@ public partial class RewardItemsControllerTests
         // Assert
         Assert.IsInstanceOfType(actionResult.Result, typeof(OkObjectResult));
         var ok = actionResult.Result as OkObjectResult;
-        Assert.IsNull(ok?.Value, "Expected OkObjectResult.Value to be null when repository returns null");
-        repoMock.Verify(r => r.ListAsync(It.IsAny<CancellationToken>()), Times.Once);
+        var returned = ok?.Value as List<RewardItem>;
+        Assert.IsNotNull(returned, "複数件データがそのまま返ること");
+        CollectionAssert.AreEqual(items, returned, "リポジトリの返却値が加工されず返ること");
+        repoMock.Verify(r => r.ListAsync(default), Times.Once);
+        repoMock.VerifyNoOtherCalls();
     }
 
 }
