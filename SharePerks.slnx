@@ -1,6 +1,7 @@
 <Solution>
   <Project Path="Shared/Shared.csproj" />
   <Project Path="SharePerks/Admin.Client/Admin.Client.csproj" />
+  <Project Path="SharePerks/Admin.UnitTests/Admin.UnitTests.csproj" Id="c2c40442-cb1d-47de-b18a-fc13a1fba4f0" />
   <Project Path="SharePerks/Admin/Admin.csproj" />
   <Project Path="SharePerks/User.Client/User.Client.csproj" />
   <Project Path="SharePerks/User/User.csproj" />
