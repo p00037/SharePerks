@@ -16,6 +16,7 @@ builder.Services.AddScoped<OverlayState>();
 builder.Services.AddScoped(_ => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 builder.Services.AddScoped<RewardSelectionState>();
 builder.Services.AddScoped<IShareholderOrderApiClient, ShareholderOrderApiClient>();
+builder.Services.AddScoped<IShareholderProfileApiClient, ShareholderProfileApiClient>();
 
 builder.Services.AddAuthorizationCore();
 builder.Services.AddCascadingAuthenticationState();
