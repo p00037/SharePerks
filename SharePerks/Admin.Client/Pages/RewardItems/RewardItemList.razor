@@ -47,7 +47,14 @@
                     <MudTd DataLabel="商品名">@context.ItemName</MudTd>
                     <MudTd DataLabel="必要ポイント" Class="text-center">@context.RequiredPoints</MudTd>
                     <MudTd DataLabel="表示順" Class="text-center">@context.DisplayOrder</MudTd>
-                    <MudTd DataLabel="公開状態" Class="text-center" Variant="Variant.Filled" Size="Size.Small">@(context.IsActive ? "公開" : "非公開")</MudTd>
+                    <MudTd DataLabel="公開状態" Class="text-center">
+                        <MudChip T="string"
+                                 Variant="Variant.Filled"
+                                 Size="Size.Small"
+                                 Color="@(context.IsActive ? Color.Success : Color.Default)">
+                            @(context.IsActive ? "公開" : "非公開")
+                        </MudChip>
+                    </MudTd>
                     <MudTd DataLabel="更新日時 (UTC)">@context.UpdatedAt.ToString("yyyy/MM/dd HH:mm")</MudTd>
                     <MudTd>
                         <MudStack Row="true" Spacing="1">
