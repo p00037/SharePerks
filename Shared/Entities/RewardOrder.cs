@@ -12,6 +12,19 @@ public class RewardOrder
     [ForeignKey(nameof(Shareholder))]
     public int ShareholderId { get; set; }
 
+    [Required]
+    public required string PostalCode { get; set; }
+
+    [Required]
+    public required string Address1 { get; set; }
+
+    [Required]
+    public required string Address2 { get; set; }
+
+    public string? Address3 { get; set; }
+
+    public string? PhoneNumber { get; set; }
+
     public int TotalPoints { get; set; }
 
     public DateTime OrderedAt { get; set; }

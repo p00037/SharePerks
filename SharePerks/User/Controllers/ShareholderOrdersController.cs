@@ -98,6 +98,11 @@ public sealed class ShareholderOrdersController(IUnitOfWork unitOfWork, ILogger<
         var rewardOrder = new RewardOrder
         {
             ShareholderId = shareholder.ShareholderId,
+            PostalCode = request.PostalCode,
+            Address1 = request.Address1,
+            Address2 = request.Address2,
+            Address3 = request.Address3,
+            PhoneNumber = request.PhoneNumber,
             TotalPoints = totalPoints,
             OrderedAt = utcNow,
             IsCancelled = false,

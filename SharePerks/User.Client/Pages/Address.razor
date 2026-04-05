@@ -1,7 +1,9 @@
 @page "/address"
 @using User.Client.Services
+@using User.Client.Services.Api.Interface
 @inject NavigationManager NavigationManager
 @inject RewardSelectionState SelectionState
+@inject IShareholderProfileApiClient ShareholderProfileApiClient
 
 <PageTitle>住所等の入力</PageTitle>
 
@@ -73,8 +75,33 @@
 @code {
     private AddressInput addressInput = new();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
+        if (HasAddress(SelectionState.Address))
+        {
+            addressInput = CloneAddress(SelectionState.Address);
+            return;
+        }
+
+        try
+        {
+            var shareholderAddress = await ShareholderProfileApiClient.GetAddressAsync();
+            addressInput = new AddressInput
+            {
+                PostalCode = shareholderAddress.PostalCode,
+                PhoneNumber = shareholderAddress.PhoneNumber ?? string.Empty,
+                Address1 = shareholderAddress.Address1,
+                Address2 = shareholderAddress.Address2,
+                Address3 = shareholderAddress.Address3
+            };
+
+            SelectionState.SetAddress(CloneAddress(addressInput));
+            return;
+        }
+        catch (Exception)
+        {
+        }
+
         addressInput = new AddressInput
         {
             PostalCode = SelectionState.Address.PostalCode,
@@ -94,5 +121,26 @@
     {
         SelectionState.SetAddress(addressInput);
         NavigationManager.NavigateTo("/confirm");
+    }
+
+    private static bool HasAddress(AddressInput address)
+    {
+        return !string.IsNullOrWhiteSpace(address.PostalCode)
+            || !string.IsNullOrWhiteSpace(address.PhoneNumber)
+            || !string.IsNullOrWhiteSpace(address.Address1)
+            || !string.IsNullOrWhiteSpace(address.Address2)
+            || !string.IsNullOrWhiteSpace(address.Address3);
+    }
+
+    private static AddressInput CloneAddress(AddressInput address)
+    {
+        return new AddressInput
+        {
+            PostalCode = address.PostalCode,
+            PhoneNumber = address.PhoneNumber,
+            Address1 = address.Address1,
+            Address2 = address.Address2,
+            Address3 = address.Address3
+        };
     }
 }
