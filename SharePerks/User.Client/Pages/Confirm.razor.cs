@@ -13,6 +13,7 @@ namespace User.Client.Pages
                                   && !string.IsNullOrWhiteSpace(SelectionState.Address.Address1)
                                   && !string.IsNullOrWhiteSpace(SelectionState.Address.Address2)
                                   && !string.IsNullOrWhiteSpace(SelectionState.Address.PhoneNumber)
+                                  && !SelectionState.IsExported
                                   && isAgreed;
 
         protected override void OnInitialized()
@@ -57,8 +58,9 @@ namespace User.Client.Pages
                     SelectionState.SelectedItems.Select(x => new CreateRewardOrderItemRequestDto(x.ItemId, x.Quantity)).ToList());
 
                 var result = await OrderApiClient.CreateAsync(request);
+                var wasUpdate = SelectionState.HasExistingOrder;
                 SelectionState.Clear();
-                NavigationManager.NavigateTo($"/complete?orderId={result.OrderId}");
+                NavigationManager.NavigateTo($"/complete?orderId={result.OrderId}&updated={wasUpdate}");
                 return;
             }, "申し込み登録に失敗しました。");
         }

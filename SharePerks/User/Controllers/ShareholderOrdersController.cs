@@ -12,6 +12,35 @@ namespace User.Controllers;
 [Authorize(Roles = ApplicationRoles.User)]
 public sealed class ShareholderOrdersController(IUnitOfWork unitOfWork, ILogger<ShareholderOrdersController> logger) : ControllerBase
 {
+    [HttpGet]
+    public async Task<ActionResult<ShareholderOrderDto>> GetAsync(CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Unauthorized();
+        }
+
+        var shareholder = await unitOfWork.Shareholders.GetByUserIdAsync(userId, cancellationToken);
+        if (shareholder is null)
+        {
+            return NotFound(new ProblemDetails
+            {
+                Title = "株主情報が見つかりません。",
+                Detail = "株主情報が未登録、または無効化されています。",
+                Status = StatusCodes.Status404NotFound
+            });
+        }
+
+        var rewardOrder = await unitOfWork.RewardOrders.GetByShareholderIdAsync(shareholder.ShareholderId, cancellationToken);
+        if (rewardOrder is null)
+        {
+            return NotFound();
+        }
+
+        return Ok(ToDto(rewardOrder));
+    }
+
     [HttpPost]
     public async Task<ActionResult<CreateRewardOrderResponseDto>> PostAsync(
         [FromBody] CreateRewardOrderRequestDto request,
@@ -31,7 +60,7 @@ public sealed class ShareholderOrdersController(IUnitOfWork unitOfWork, ILogger<
             return Unauthorized();
         }
 
-        var shareholder = await unitOfWork.Shareholders.GetByUserIdAsync(userId, cancellationToken);
+        var shareholder = await unitOfWork.Shareholders.GetByUserIdForUpdateAsync(userId, cancellationToken);
         if (shareholder is null)
         {
             return NotFound(new ProblemDetails
@@ -42,12 +71,12 @@ public sealed class ShareholderOrdersController(IUnitOfWork unitOfWork, ILogger<
             });
         }
 
-        var duplicated = await unitOfWork.RewardOrders.ExistsByShareholderIdAsync(shareholder.ShareholderId, cancellationToken);
-        if (duplicated)
+        var existingOrder = await unitOfWork.RewardOrders.GetByShareholderIdForUpdateAsync(shareholder.ShareholderId, cancellationToken);
+        if (existingOrder?.IsExported == true)
         {
             return ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]>
             {
-                ["Order"] = ["すでに申し込みが完了しています。再申し込みはできません。"]
+                ["Order"] = ["申込内容は既に出力済みのため更新できません。管理者へお問い合わせください。"]
             }));
         }
 
@@ -85,7 +114,8 @@ public sealed class ShareholderOrdersController(IUnitOfWork unitOfWork, ILogger<
         }
 
         var totalPoints = orderItems.Sum(x => x.SubtotalPoints);
-        var availablePoints = shareholder.GrantedPoints - shareholder.UsedPoints;
+        var existingTotalPoints = existingOrder?.TotalPoints ?? 0;
+        var availablePoints = shareholder.GrantedPoints - shareholder.UsedPoints + existingTotalPoints;
         if (totalPoints > availablePoints)
         {
             return ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]>
@@ -95,28 +125,76 @@ public sealed class ShareholderOrdersController(IUnitOfWork unitOfWork, ILogger<
         }
 
         var utcNow = DateTime.UtcNow;
-        var rewardOrder = new RewardOrder
+        RewardOrder rewardOrder;
+        if (existingOrder is null)
         {
-            ShareholderId = shareholder.ShareholderId,
-            PostalCode = request.PostalCode,
-            Address1 = request.Address1,
-            Address2 = request.Address2,
-            Address3 = request.Address3,
-            PhoneNumber = request.PhoneNumber,
-            TotalPoints = totalPoints,
-            OrderedAt = utcNow,
-            IsCancelled = false,
-            IsExported = false,
-            CreatedAt = utcNow,
-            UpdatedAt = utcNow,
-            OrderItems = orderItems
-        };
+            rewardOrder = new RewardOrder
+            {
+                ShareholderId = shareholder.ShareholderId,
+                PostalCode = request.PostalCode,
+                Address1 = request.Address1,
+                Address2 = request.Address2,
+                Address3 = request.Address3,
+                PhoneNumber = request.PhoneNumber,
+                TotalPoints = totalPoints,
+                OrderedAt = utcNow,
+                IsCancelled = false,
+                IsExported = false,
+                CreatedAt = utcNow,
+                UpdatedAt = utcNow,
+                OrderItems = orderItems
+            };
 
-        unitOfWork.RewardOrders.Add(rewardOrder);
+            unitOfWork.RewardOrders.Add(rewardOrder);
+        }
+        else
+        {
+            rewardOrder = existingOrder;
+            rewardOrder.PostalCode = request.PostalCode;
+            rewardOrder.Address1 = request.Address1;
+            rewardOrder.Address2 = request.Address2;
+            rewardOrder.Address3 = request.Address3;
+            rewardOrder.PhoneNumber = request.PhoneNumber;
+            rewardOrder.TotalPoints = totalPoints;
+            rewardOrder.OrderedAt = utcNow;
+            rewardOrder.UpdatedAt = utcNow;
+            unitOfWork.RewardOrders.ReplaceItems(rewardOrder, orderItems);
+        }
+
+        shareholder.UsedPoints = totalPoints;
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        logger.LogInformation("申込登録が完了しました。OrderId: {OrderId}, ShareholderId: {ShareholderId}", rewardOrder.OrderId, shareholder.ShareholderId);
+        logger.LogInformation(
+            existingOrder is null
+                ? "申込登録が完了しました。OrderId: {OrderId}, ShareholderId: {ShareholderId}"
+                : "申込更新が完了しました。OrderId: {OrderId}, ShareholderId: {ShareholderId}",
+            rewardOrder.OrderId,
+            shareholder.ShareholderId);
 
         return Ok(new CreateRewardOrderResponseDto(rewardOrder.OrderId));
+    }
+
+    private static ShareholderOrderDto ToDto(RewardOrder rewardOrder)
+    {
+        return new ShareholderOrderDto(
+            rewardOrder.OrderId,
+            rewardOrder.PostalCode,
+            rewardOrder.Address1,
+            rewardOrder.Address2,
+            rewardOrder.Address3,
+            rewardOrder.PhoneNumber,
+            rewardOrder.TotalPoints,
+            rewardOrder.IsExported,
+            rewardOrder.OrderItems
+                .Where(x => x.Item is not null)
+                .Select(x => new ShareholderOrderItemDto(
+                    x.ItemId,
+                    x.Item!.ItemCode,
+                    x.Item.ItemName,
+                    x.Item.ItemDescription,
+                    x.Item.ImagePath,
+                    x.Item.RequiredPoints,
+                    x.Quantity))
+                .ToList());
     }
 }
