@@ -2,9 +2,11 @@
 @using System.Net.Http.Json
 @using Shared.Dtos
 @using User.Client.Services
+@using User.Client.Services.Api.Interface
 @inject NavigationManager NavigationManager
 @inject HttpClient Http
 @inject RewardSelectionState SelectionState
+@inject IShareholderOrderApiClient OrderApiClient
 
 @* <PageTitle>優待商品選択</PageTitle>
 
@@ -80,6 +82,18 @@ else
                         @errorMessage
                     </MudAlert>
                 }
+                else if (SelectionState.IsExported)
+                {
+                    <MudAlert Severity="Severity.Warning" Variant="Variant.Filled">
+                        申込内容は既に出力済みのため更新できません。保存済みの内容のみ確認できます。
+                    </MudAlert>
+                }
+                else if (SelectionState.HasExistingOrder)
+                {
+                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                        保存済みの申込内容を表示しています。数量を変更して更新できます。
+                    </MudAlert>
+                }
 
                 <EditForm Model="rewardItems" OnSubmit="MoveToAddress">
                     <DataAnnotationsValidator />
@@ -111,7 +125,13 @@ else
                                             <MudChip T="string" Color="Color.Primary" Variant="Variant.Filled">必要ポイント: @item.RequiredPoints</MudChip>
                                         </MudCardContent>
                                         <MudCardActions>
-                                            <MudNumericField T="int" Label="数量" Min="0" Max="99" Value="@GetQuantity(item)" ValueChanged="value => UpdateQuantity(item, value)" />
+                                            <MudNumericField T="int"
+                                                             Label="数量"
+                                                             Min="0"
+                                                             Max="99"
+                                                             Value="@GetQuantity(item)"
+                                                             ValueChanged="value => UpdateQuantity(item, value)"
+                                                             Disabled="@SelectionState.IsExported" />
                                         </MudCardActions>
                                     </MudCard>
                                 </MudItem>
@@ -123,8 +143,9 @@ else
                     <MudStack Row="true" Spacing="2" Class="mt-4">
                         <MudButton Variant="Variant.Filled"
                                    Color="Color.Primary"
-                                   ButtonType="ButtonType.Submit">
-                            住所等の入力へ進む
+                                   ButtonType="ButtonType.Submit"
+                                   Disabled="@(!CanProceed)">
+                            @(SelectionState.IsExported ? "保存済み住所を確認する" : "住所等の入力へ進む")
                         </MudButton>
                     </MudStack>
                 </EditForm>
@@ -146,16 +167,40 @@ else
 
     private int TotalPoints => rewardItems.Sum(item => item.RequiredPoints * GetQuantity(item));
 
-    private bool CanProceed => TotalPoints > 0 && TotalPoints <= AvailablePoints;
+    private bool CanProceed => SelectionState.IsExported
+        ? SelectionState.HasExistingOrder
+        : TotalPoints > 0 && TotalPoints <= AvailablePoints;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            var items = await Http.GetFromJsonAsync<List<RewardItemSummaryDto>>("api/shareholder/items");
+            var itemsTask = Http.GetFromJsonAsync<List<RewardItemSummaryDto>>("api/shareholder/items");
+            var currentOrderTask = SelectionState.HasLoadedExistingOrder
+                ? Task.FromResult<ShareholderOrderDto?>(null)
+                : OrderApiClient.GetCurrentAsync();
+
+            await Task.WhenAll(itemsTask, currentOrderTask);
+
+            var items = await itemsTask;
             if (items is not null)
             {
                 rewardItems.AddRange(items);
+            }
+
+            var currentOrder = await currentOrderTask;
+            if (currentOrder is not null)
+            {
+                ApplyExistingOrder(currentOrder);
+            }
+            else if (!SelectionState.HasLoadedExistingOrder)
+            {
+                RestoreFromSelectionState();
+                SelectionState.MarkOrderLoaded();
+            }
+            else
+            {
+                RestoreFromSelectionState();
             }
         }
         catch (Exception)
@@ -218,5 +263,52 @@ else
 
         SelectionState.SetSelection(selectedItems);
         NavigationManager.NavigateTo("/address");
+    }
+
+    private void ApplyExistingOrder(ShareholderOrderDto currentOrder)
+    {
+        SelectionState.SetExistingOrder(currentOrder.OrderId, currentOrder.IsExported);
+
+        foreach (var item in currentOrder.Items)
+        {
+            quantityByItemId[item.ItemId] = item.Quantity;
+
+            if (rewardItems.All(x => x.ItemId != item.ItemId))
+            {
+                rewardItems.Add(new RewardItemSummaryDto(
+                    item.ItemId,
+                    item.ItemCode,
+                    item.ItemName,
+                    item.ItemDescription,
+                    item.RequiredPoints,
+                    item.ImagePath));
+            }
+        }
+
+        rewardItems.Sort(static (x, y) => x.ItemId.CompareTo(y.ItemId));
+
+        SelectionState.SetSelection(currentOrder.Items.Select(item => new SelectedRewardItem(
+            item.ItemId,
+            item.ItemName,
+            item.ImagePath,
+            item.RequiredPoints,
+            item.Quantity)));
+
+        SelectionState.SetAddress(new AddressInput
+        {
+            PostalCode = currentOrder.PostalCode,
+            PhoneNumber = currentOrder.PhoneNumber ?? string.Empty,
+            Address1 = currentOrder.Address1,
+            Address2 = currentOrder.Address2,
+            Address3 = currentOrder.Address3
+        });
+    }
+
+    private void RestoreFromSelectionState()
+    {
+        foreach (var item in SelectionState.SelectedItems)
+        {
+            quantityByItemId[item.ItemId] = item.Quantity;
+        }
     }
 }

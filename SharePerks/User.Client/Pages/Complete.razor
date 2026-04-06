@@ -5,8 +5,8 @@
 
 <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
     <MudPaper Class="pa-6" Elevation="1">
-        <MudText Typo="Typo.h5" Class="mb-2">申込が完了しました</MudText>
-        <MudText Typo="Typo.body1" Class="mb-4">お申し込みありがとうございました。</MudText>
+        <MudText Typo="Typo.h5" Class="mb-2">@(Updated == true ? "申込を更新しました" : "申込が完了しました")</MudText>
+        <MudText Typo="Typo.body1" Class="mb-4">@(Updated == true ? "申込内容を更新しました。" : "お申し込みありがとうございました。")</MudText>
 
         @if (OrderId.HasValue)
         {
@@ -24,6 +24,9 @@
 @code {
     [SupplyParameterFromQuery(Name = "orderId")]
     public int? OrderId { get; set; }
+
+    [SupplyParameterFromQuery(Name = "updated")]
+    public bool? Updated { get; set; }
 
     private void MoveHome()
     {

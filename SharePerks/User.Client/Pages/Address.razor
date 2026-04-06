@@ -4,6 +4,7 @@
 @inject NavigationManager NavigationManager
 @inject RewardSelectionState SelectionState
 @inject IShareholderProfileApiClient ShareholderProfileApiClient
+@inject IShareholderOrderApiClient ShareholderOrderApiClient
 
 <PageTitle>住所等の入力</PageTitle>
 
@@ -26,6 +27,19 @@
                     <EditForm Model="addressInput" OnValidSubmit="MoveToConfirm">
                         <DataAnnotationsValidator />
 
+                        @if (SelectionState.IsExported)
+                        {
+                            <MudAlert Severity="Severity.Warning" Variant="Variant.Filled" Class="mb-4">
+                                申込内容は既に出力済みのため更新できません。保存済みの住所を確認できます。
+                            </MudAlert>
+                        }
+                        else if (SelectionState.HasExistingOrder)
+                        {
+                            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-4">
+                                保存済みの送付先情報を表示しています。内容を変更して更新できます。
+                            </MudAlert>
+                        }
+
                         <MudPaper Class="pa-4 mb-6" Elevation="1">
                             <MudText Typo="Typo.h6" Class="mb-2">選択した優待商品</MudText>
                             <MudList T="string" Dense="true">
@@ -40,19 +54,19 @@
                         <MudPaper Class="pa-4" Elevation="1">
                             <MudGrid>
                                 <MudItem xs="12" sm="6">
-                                    <MudTextField T="string" Label="郵便番号" Placeholder="例: 123-4567" Variant="Variant.Outlined" @bind-Value="addressInput.PostalCode" Required="true" />
+                                    <MudTextField T="string" Label="郵便番号" Placeholder="例: 123-4567" Variant="Variant.Outlined" @bind-Value="addressInput.PostalCode" Required="true" Disabled="@SelectionState.IsExported" />
                                 </MudItem>
                                 <MudItem xs="12" sm="6">
-                                    <MudTextField T="string" Label="電話番号" Placeholder="例: 03-1234-5678" Variant="Variant.Outlined" @bind-Value="addressInput.PhoneNumber" Required="true" />
+                                    <MudTextField T="string" Label="電話番号" Placeholder="例: 03-1234-5678" Variant="Variant.Outlined" @bind-Value="addressInput.PhoneNumber" Required="true" Disabled="@SelectionState.IsExported" />
                                 </MudItem>
                                 <MudItem xs="12">
-                                    <MudTextField T="string" Label="住所1（都道府県・市区町村）" Variant="Variant.Outlined" @bind-Value="addressInput.Address1" Required="true" />
+                                    <MudTextField T="string" Label="住所1（都道府県・市区町村）" Variant="Variant.Outlined" @bind-Value="addressInput.Address1" Required="true" Disabled="@SelectionState.IsExported" />
                                 </MudItem>
                                 <MudItem xs="12">
-                                    <MudTextField T="string" Label="住所2（丁目・番地）" Variant="Variant.Outlined" @bind-Value="addressInput.Address2" Required="true" />
+                                    <MudTextField T="string" Label="住所2（丁目・番地）" Variant="Variant.Outlined" @bind-Value="addressInput.Address2" Required="true" Disabled="@SelectionState.IsExported" />
                                 </MudItem>
                                 <MudItem xs="12">
-                                    <MudTextField T="string" Label="住所3（建物名・部屋番号）" Variant="Variant.Outlined" @bind-Value="addressInput.Address3" />
+                                    <MudTextField T="string" Label="住所3（建物名・部屋番号）" Variant="Variant.Outlined" @bind-Value="addressInput.Address3" Disabled="@SelectionState.IsExported" />
                                 </MudItem>
                             </MudGrid>
                         </MudPaper>
@@ -77,6 +91,39 @@
 
     protected override async Task OnInitializedAsync()
     {
+        if (!SelectionState.HasLoadedExistingOrder)
+        {
+            try
+            {
+                var currentOrder = await ShareholderOrderApiClient.GetCurrentAsync();
+                if (currentOrder is not null)
+                {
+                    SelectionState.SetExistingOrder(currentOrder.OrderId, currentOrder.IsExported);
+                    SelectionState.SetSelection(currentOrder.Items.Select(item => new SelectedRewardItem(
+                        item.ItemId,
+                        item.ItemName,
+                        item.ImagePath,
+                        item.RequiredPoints,
+                        item.Quantity)));
+                    addressInput = new AddressInput
+                    {
+                        PostalCode = currentOrder.PostalCode,
+                        PhoneNumber = currentOrder.PhoneNumber ?? string.Empty,
+                        Address1 = currentOrder.Address1,
+                        Address2 = currentOrder.Address2,
+                        Address3 = currentOrder.Address3
+                    };
+
+                    SelectionState.SetAddress(CloneAddress(addressInput));
+                    SelectionState.MarkOrderLoaded();
+                    return;
+                }
+            }
+            catch (Exception)
+            {
+            }
+        }
+
         if (HasAddress(SelectionState.Address))
         {
             addressInput = CloneAddress(SelectionState.Address);
@@ -119,7 +166,7 @@
 
     private void MoveToConfirm()
     {
-        SelectionState.SetAddress(addressInput);
+        SelectionState.SetAddress(CloneAddress(addressInput));
         NavigationManager.NavigateTo("/confirm");
     }
 
