@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Data;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
@@ -7,6 +8,8 @@ using Serilog;
 using Serilog.Sinks.MSSqlServer;
 using User.Client.Pages;
 using User.Client.Services;
+using User.Client.Services.Api;
+using User.Client.Services.Api.Interface;
 using User.Components;
 using User.Components.Account;
 using User.Data;
@@ -63,6 +66,14 @@ builder.Services.AddRazorComponents()
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityUserAccessor>();
 builder.Services.AddScoped<IdentityRedirectManager>();
+builder.Services.AddScoped<RewardSelectionState>();
+builder.Services.AddScoped(sp =>
+{
+    var navigationManager = sp.GetRequiredService<NavigationManager>();
+    return new HttpClient { BaseAddress = new Uri(navigationManager.BaseUri) };
+});
+builder.Services.AddScoped<IShareholderOrderApiClient, ShareholderOrderApiClient>();
+builder.Services.AddScoped<IShareholderProfileApiClient, ShareholderProfileApiClient>();
 
 builder.Services.AddAuthentication(options =>
     {
