@@ -12,6 +12,7 @@ builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.
 
 // Apiサービス
 builder.Services.AddScoped<IRewardItemApiClient, RewardItemApiClient>();
+builder.Services.AddScoped<IRewardOrderExportApiClient, RewardOrderExportApiClient>();
 builder.Services.AddScoped<IShareholderImportApiClient, ShareholderImportApiClient>();
 
 // Overlayサービス

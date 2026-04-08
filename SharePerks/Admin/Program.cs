@@ -32,6 +32,7 @@ builder.Services.AddScoped(sp =>
 
 //Apiサービス
 builder.Services.AddScoped<IRewardItemApiClient, RewardItemApiClient>();
+builder.Services.AddScoped<IRewardOrderExportApiClient, RewardOrderExportApiClient>();
 
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
