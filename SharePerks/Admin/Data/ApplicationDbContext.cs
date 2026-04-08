@@ -12,6 +12,8 @@ namespace Admin.Data
 
             modelBuilder.Entity<RewardItem>();
             modelBuilder.Entity<Shareholder>();
+            modelBuilder.Entity<RewardOrder>();
+            modelBuilder.Entity<RewardOrderItem>();
             modelBuilder.Entity<ImportBatch>();
         }
     }
