@@ -26,8 +26,8 @@
 
             <MudGrid>
                 <MudItem md="12">
-                    <MudStaticTextField For="@(() => Input.Email)" @bind-Value="Input.Email" 
-                        Label="メールアドレス" Placeholder="name@example.com"
+                    <MudStaticTextField For="@(() => Input.UserName)" @bind-Value="Input.UserName" 
+                        Label="ユーザー名" Placeholder="login-id"
                         UserAttributes="@(new() { { "autocomplete", "username" }, { "aria-required", "true" } } )" />
                 </MudItem>
                 <MudItem md="12">
@@ -82,7 +82,7 @@
 
     public async Task LoginUser()
     {
-        var user = await UserManager.FindByEmailAsync(Input.Email);
+        var user = await UserManager.FindByNameAsync(Input.UserName);
 
         // This doesn't count login failures towards account lockout
         // To enable password failures to trigger account lockout, set lockoutOnFailure: true
@@ -118,8 +118,7 @@
     private sealed class InputModel
     {
         [Required(ErrorMessage = "この項目は必須です。")]
-        [EmailAddress(ErrorMessage = "有効なメールアドレス形式で入力してください。")]
-        public string Email { get; set; } = "";
+        public string UserName { get; set; } = "";
 
         [Required(ErrorMessage = "この項目は必須です。")]
         [DataType(DataType.Password)]
