@@ -1,5 +1,6 @@
-﻿@page "/Account/Login"
+@page "/Account/Login"
 @attribute [AllowAnonymous]
+@layout User.Components.Account.Shared.LoginLayout
 
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Authentication
@@ -9,55 +10,47 @@
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
 @inject ILogger<Login> Logger
-@inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
 
 <PageTitle>ログイン</PageTitle>
 
-<MudText Typo="Typo.h3" GutterBottom="true">ログイン</MudText>
+<div class="admin-login-page">
+    <div class="admin-login-page__shell">
+        <MudPaper Class="admin-login-card" Elevation="6">
+            <div class="admin-login-card__header">
+                <p class="admin-login-card__eyebrow">SharePerks User</p>
+                <h1 class="admin-login-card__title">ユーザー画面にログイン</h1>
+                <p class="admin-login-card__description">配布されたログインIDとパスワードを入力してください。</p>
+            </div>
 
-<MudGrid>
-    <MudItem md="6">
-        <StatusMessage Message="@errorMessage" />
-        <EditForm Model="Input" method="post" OnValidSubmit="LoginUser" FormName="login">
-            <DataAnnotationsValidator />
+            <StatusMessage Message="@errorMessage" />
 
-            <MudText GutterBottom="true" Typo="Typo.body1">ローカルアカウントでログインしてください。</MudText>
+            <EditForm Model="Input" method="post" OnValidSubmit="LoginUser" FormName="login">
+                <DataAnnotationsValidator />
 
-            <MudGrid>
-                <MudItem md="12">
-                    <MudStaticTextField For="@(() => Input.UserName)" @bind-Value="Input.UserName" 
-                        Label="ユーザー名" Placeholder="login-id"
-                        UserAttributes="@(new() { { "autocomplete", "username" }, { "aria-required", "true" } } )" />
-                </MudItem>
-                <MudItem md="12">
-                    <MudStaticTextField For="@(() => Input.Password)" @bind-Value="Input.Password" 
-                        Label="パスワード" InputType="InputType.Password" Placeholder="password"
-                        UserAttributes="@(new() { { "autocomplete", "current-password" }, { "aria-required", "true" } } )" />
-                </MudItem>
-                <MudItem md="12">
+                <div class="admin-login-form">
+                    <MudStaticTextField For="@(() => Input.UserName)" @bind-Value="Input.UserName"
+                                        Label="ログインID" Placeholder="login-id"
+                                        UserAttributes="@(new() { { "autocomplete", "username" }, { "aria-required", "true" } })" />
+
+                    <MudStaticTextField For="@(() => Input.Password)" @bind-Value="Input.Password"
+                                        Label="パスワード" InputType="InputType.Password" Placeholder="password"
+                                        UserAttributes="@(new() { { "autocomplete", "current-password" }, { "aria-required", "true" } })" />
+
                     <MudStaticCheckBox For="@(() => Input.RememberMe)" @bind-Value="Input.RememberMe">ログイン状態を保持</MudStaticCheckBox>
-                </MudItem>
-                <MudItem md="12">
-                    <MudStaticButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" FormAction="FormAction.Submit">ログイン</MudStaticButton>
-                </MudItem>
-            </MudGrid>
-        </EditForm>
 
-        <MudGrid Class="mt-4">
-            <MudItem md="12">
-                <MudLink Href="Account/ForgotPassword">パスワードをお忘れですか？</MudLink><br />
-                <MudLink Href="@(NavigationManager.GetUriWithQueryParameters("Account/Register", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))">新規登録</MudLink><br />
-                <MudLink Href="Account/ResendEmailConfirmation">確認メールを再送する</MudLink>
-            </MudItem>
-        </MudGrid>
-    </MudItem>
-    <MudItem md="6">
-        <MudText GutterBottom="true" Typo="Typo.body1">外部サービスでログイン</MudText>
-
-        <ExternalLoginPicker />
-    </MudItem>
-</MudGrid>
+                    <MudStaticButton Class="admin-login-form__submit"
+                                     Variant="Variant.Filled"
+                                     Color="Color.Primary"
+                                     FullWidth="true"
+                                     FormAction="FormAction.Submit">
+                        ログイン
+                    </MudStaticButton>
+                </div>
+            </EditForm>
+        </MudPaper>
+    </div>
+</div>
 
 @code {
     private string? errorMessage;
