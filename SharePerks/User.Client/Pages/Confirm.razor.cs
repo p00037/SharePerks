@@ -16,12 +16,17 @@ namespace User.Client.Pages
                                   && !SelectionState.IsExported
                                   && isAgreed;
 
-        protected override void OnInitialized()
+        protected override async Task OnInitializedAsync()
+        {
+            await RunAsync(InitializedAsync, "初期処理に失敗しました。");
+        }
+
+        private Task InitializedAsync()
         {
             if (SelectionState.SelectedItems.Count == 0)
             {
                 NavigationManager.NavigateTo("/items");
-                return;
+                return Task.CompletedTask;
             }
 
             if (string.IsNullOrWhiteSpace(SelectionState.Address.PostalCode)
@@ -31,38 +36,46 @@ namespace User.Client.Pages
             {
                 NavigationManager.NavigateTo("/address");
             }
+
+            return Task.CompletedTask;
         }
 
-        private void MoveToAddress()
+        private async Task HandleMoveToAddressAsync()
         {
-            NavigationManager.NavigateTo("/address");
+            await RunAsync(() =>
+            {
+                NavigationManager.NavigateTo("/address");
+                return Task.CompletedTask;
+            });
+        }
+
+        private async Task HandleSubmitOrderAsync()
+        {
+            await RunAsync(SubmitOrderAsync, "申し込み登録に失敗しました。");
         }
 
         private async Task SubmitOrderAsync()
         {
-            await RunAsync(async () =>
+            if (!CanSubmit)
             {
-                if (!CanSubmit)
-                {
-                    return;
-                }
-
-                _serverErrorMessage = null;
-
-                var request = new CreateRewardOrderRequestDto(
-                    SelectionState.Address.PostalCode,
-                    SelectionState.Address.Address1,
-                    SelectionState.Address.Address2,
-                    SelectionState.Address.Address3,
-                    SelectionState.Address.PhoneNumber,
-                    SelectionState.SelectedItems.Select(x => new CreateRewardOrderItemRequestDto(x.ItemId, x.Quantity)).ToList());
-
-                var result = await OrderApiClient.CreateAsync(request);
-                var wasUpdate = SelectionState.HasExistingOrder;
-                SelectionState.Clear();
-                NavigationManager.NavigateTo($"/complete?orderId={result.OrderId}&updated={wasUpdate}");
                 return;
-            }, "申し込み登録に失敗しました。");
+            }
+
+            _serverErrorMessage = null;
+
+            var request = new CreateRewardOrderRequestDto(
+                SelectionState.Address.PostalCode,
+                SelectionState.Address.Address1,
+                SelectionState.Address.Address2,
+                SelectionState.Address.Address3,
+                SelectionState.Address.PhoneNumber,
+                SelectionState.SelectedItems.Select(x => new CreateRewardOrderItemRequestDto(x.ItemId, x.Quantity)).ToList());
+
+            var result = await OrderApiClient.CreateAsync(request);
+            var wasUpdate = SelectionState.HasExistingOrder;
+            SelectionState.Clear();
+            NavigationManager.NavigateTo($"/complete?orderId={result.OrderId}&updated={wasUpdate}");
+            return;
         }
     }
 }

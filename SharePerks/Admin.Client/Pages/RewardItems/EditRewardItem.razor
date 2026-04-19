@@ -24,7 +24,7 @@
                 }
                 @if (!(_editContext is null))
                 {
-                    <EditForm EditContext="_editContext" OnValidSubmit="HandleValidSubmit">
+                    <EditForm EditContext="_editContext" OnValidSubmit="HandleValidSubmitAsync">
                         <DataAnnotationsValidator />
                         <ValidationSummary />
 
@@ -99,7 +99,7 @@
                             </MudButton>
                             <MudButton Variant="Variant.Outlined"
                                        Color="Color.Secondary"
-                                       OnClick="HandleResetForm">
+                                       OnClick="HandleResetFormAsync">
                                 入力を戻す
                             </MudButton>
                             <MudButton Variant="Variant.Text"

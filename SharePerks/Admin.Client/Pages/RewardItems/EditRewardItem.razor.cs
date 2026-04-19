@@ -20,15 +20,12 @@ namespace Admin.Client.Pages.RewardItems
         private IBrowserFile? _imageFile;
         private string? _selectedImageName;
 
-        private Task HandleValidSubmit() => RunAsync(ValidSubmit, "更新に失敗しました。もう一度実行してください");
-        private Task HandleResetForm() => RunAsync(ResetForm);
-
         protected override async Task OnInitializedAsync()
         {
-            await RunAsync(LoadItem, "初期処理に失敗しました。");
+            await RunAsync(LoadItemAsync, "初期処理に失敗しました。");
         }
 
-        private async Task LoadItem()
+        private async Task LoadItemAsync()
         {
             if (!ItemId.HasValue)
             {
@@ -40,7 +37,9 @@ namespace Admin.Client.Pages.RewardItems
             base.InitializeEditContext(ToInputModel(item));
         }
 
-        private async Task ValidSubmit()
+        private async Task HandleValidSubmitAsync() => await RunAsync(ValidSubmitAsync, "更新に失敗しました。もう一度実行してください");
+
+        private async Task ValidSubmitAsync()
         {
             if (!ItemId.HasValue)
             {
@@ -56,6 +55,8 @@ namespace Admin.Client.Pages.RewardItems
             return;
         }
 
+        private async Task HandleResetFormAsync() => await RunAsync(ResetForm);
+
         private Task ResetForm()
         {
             if (_loadedItem == null)
@@ -67,10 +68,14 @@ namespace Admin.Client.Pages.RewardItems
             return base.ResetForm(ToInputModel(_loadedItem));
         }
 
-        private void HandleImageFileChange(InputFileChangeEventArgs args)
+        private async Task HandleImageFileChange(InputFileChangeEventArgs args)
         {
-            _imageFile = args.File;
-            _selectedImageName = _imageFile?.Name;
+            await RunAsync(() =>
+            {
+                _imageFile = args.File;
+                _selectedImageName = _imageFile?.Name;
+                return Task.CompletedTask;
+            });
         }
 
         private void ResetImageSelection()

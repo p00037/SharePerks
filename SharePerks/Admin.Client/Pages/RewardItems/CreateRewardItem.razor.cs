@@ -17,8 +17,6 @@ namespace Admin.Client.Pages.RewardItems
         private IBrowserFile? _imageFile;
         private string? _selectedImageName;
 
-        private Task HandleValidSubmit() => RunAsync(ValidSubmit, "登録に失敗しました。もう一度実行してください");
-        private Task HandleResetForm() => RunAsync(ResetForm);
 
         protected override async Task OnInitializedAsync()
         {
@@ -31,7 +29,12 @@ namespace Admin.Client.Pages.RewardItems
             return Task.CompletedTask;
         }
 
-        private async Task ValidSubmit()
+        private async Task HandleValidSubmitAsync()
+        {
+            await RunAsync(ValidSubmitAsync, "登録に失敗しました。もう一度実行してください");
+        }
+
+        private async Task ValidSubmitAsync()
         {
             var created = await ApiClient.CreateAsync(_formModel, _imageFile);
             _createdItem = created;
@@ -40,13 +43,18 @@ namespace Admin.Client.Pages.RewardItems
             ResetImageSelection();
         }
 
+        private async Task HandleResetFormAsync()
+        {
+            await RunAsync(ResetForm);
+        }
+
         protected Task ResetForm()
         {
             ResetImageSelection();
             return base.ResetForm(new RewardItemInput());
         }
 
-        private void HandleImageFileChange(InputFileChangeEventArgs args)
+        private void HandleImageFileChangeAsync(InputFileChangeEventArgs args)
         {
             _imageFile = args.File;
             _selectedImageName = _imageFile?.Name;

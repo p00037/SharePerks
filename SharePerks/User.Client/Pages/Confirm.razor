@@ -64,10 +64,10 @@
                 <MudCheckBox T="bool" @bind-Value="isAgreed" Label="内容を確認し、申し込みに同意します。" />
 
                 <MudStack Row="true" Spacing="2" Class="mt-4">
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!CanSubmit)" OnClick="SubmitOrderAsync">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!CanSubmit)" OnClick="HandleSubmitOrderAsync">
                         @(SelectionState.HasExistingOrder ? "申し込み内容を更新する" : "申し込みを確定する")
                     </MudButton>
-                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="MoveToAddress">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="HandleMoveToAddressAsync">
                         入力画面へ戻る
                     </MudButton>
                 </MudStack>

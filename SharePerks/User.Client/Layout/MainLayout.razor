@@ -12,6 +12,9 @@
     <MudAppBar Elevation="1">
         <MudText Typo="Typo.h5">Shareholder</MudText>
         <MudSpacer />
+        <MudOverlay Visible="@Overlay.Visible" DarkBackground>
+            <MudProgressCircular Indeterminate="true" Size="Size.Large" Class="mr-2" />
+        </MudOverlay>
         <AuthorizeView>
             <Authorized>
                 <form action="Account/Logout" method="post">

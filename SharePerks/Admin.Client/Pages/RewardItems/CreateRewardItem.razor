@@ -23,7 +23,7 @@
                     </MudAlert>
                 }
 
-                <EditForm EditContext="_editContext" OnValidSubmit="HandleValidSubmit">
+                <EditForm EditContext="_editContext" OnValidSubmit="HandleValidSubmitAsync">
                     <DataAnnotationsValidator />
                     <ValidationSummary />
 
@@ -58,7 +58,7 @@
                         </MudItem>
                         <MudItem xs="12">
                             <MudText Typo="Typo.subtitle2" Class="mb-1">商品画像</MudText>
-                            <InputFile OnChange="HandleImageFileChange" accept="image/*" />
+                            <InputFile OnChange="HandleImageFileChangeAsync" accept="image/*" />
                             @if (!string.IsNullOrWhiteSpace(_selectedImageName))
                             {
                                 <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">選択中: @_selectedImageName</MudText>
@@ -94,7 +94,7 @@
                         </MudButton>
                         <MudButton Variant="Variant.Outlined"
                                    Color="Color.Secondary"
-                                   OnClick="HandleResetForm">
+                                   OnClick="HandleResetFormAsync">
                             入力をクリア
                         </MudButton>
                         <MudButton Variant="Variant.Text"
