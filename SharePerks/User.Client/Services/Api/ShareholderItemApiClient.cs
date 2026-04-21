@@ -9,7 +9,7 @@ public sealed class ShareholderItemApiClient(HttpClient httpClient) : ApiClientB
     {
         return GetAsync<IReadOnlyList<RewardItemSummaryDto>>(
             "api/shareholder/items",
-            failedMessage: "蜆ｪ蠕・膚蜩√・蜿門ｾ励↓螟ｱ謨励＠縺ｾ縺励◆縲・",
+            failedMessage: "優待商品の取得に失敗しました。",
             cancellationToken: cancellationToken);
     }
 }
