@@ -22,6 +22,8 @@ namespace User.Client.Components
                 _editContext.OnFieldChanged -= HandleFieldChanged;
             }
 
+            Overlay.OnChange -= OnOverlayChanged;
+
             _formModel = formModel;
             _editContext = new EditContext(_formModel);
             _messageStore = new ValidationMessageStore(_editContext);
@@ -157,6 +159,8 @@ namespace User.Client.Components
 
         public void Dispose()
         {
+            Overlay.OnChange -= OnOverlayChanged;
+
             if (_editContext is null)
             {
                 return;
@@ -164,7 +168,6 @@ namespace User.Client.Components
 
             _editContext.OnValidationRequested -= HandleValidationRequested;
             _editContext.OnFieldChanged -= HandleFieldChanged;
-            Overlay.OnChange -= OnOverlayChanged;
         }
     }
 }

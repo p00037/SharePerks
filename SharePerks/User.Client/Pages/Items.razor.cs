@@ -28,7 +28,6 @@ public partial class Items : FormComponentBase<List<RewardItemSummaryDto>>
 
     protected override async Task OnInitializedAsync()
     {
-        InitializeEditContext(new List<RewardItemSummaryDto>());
         await RunAsync(LoadAsync, "優待商品の取得に失敗しました。時間をおいて再度お試しください。");
     }
 
