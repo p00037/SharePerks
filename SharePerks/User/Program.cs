@@ -72,6 +72,7 @@ builder.Services.AddScoped(sp =>
     var navigationManager = sp.GetRequiredService<NavigationManager>();
     return new HttpClient { BaseAddress = new Uri(navigationManager.BaseUri) };
 });
+builder.Services.AddScoped<IShareholderItemApiClient, ShareholderItemApiClient>();
 builder.Services.AddScoped<IShareholderOrderApiClient, ShareholderOrderApiClient>();
 builder.Services.AddScoped<IShareholderProfileApiClient, ShareholderProfileApiClient>();
 
