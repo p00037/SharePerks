@@ -33,7 +33,7 @@
                 }
                 else if (_editContext is not null)
                 {
-                    <EditForm EditContext="_editContext" OnSubmit="HandleMoveToConfirmAsync">
+                    <EditForm EditContext="_editContext" OnValidSubmit="HandleMoveToConfirmAsync">
                         <DataAnnotationsValidator />
 
                         @if (SelectionState.IsExported)

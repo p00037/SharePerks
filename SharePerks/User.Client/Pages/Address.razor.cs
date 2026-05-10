@@ -31,7 +31,15 @@ public partial class Address : FormComponentBase<AddressInput>
             return CloneAddress(SelectionState.Address);
         }
 
-        return await LoadProfileAddressAsync();
+        try
+        {
+            return await LoadProfileAddressAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine(ex);
+            return CloneAddress(SelectionState.Address);
+        }
     }
 
     private async Task<AddressInput?> TryLoadExistingOrderAddressAsync()
