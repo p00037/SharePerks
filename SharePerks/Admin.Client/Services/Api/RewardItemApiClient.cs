@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using Admin.Client.Models;
 using Admin.Client.Services.Api.Interface;
 using Microsoft.AspNetCore.Components.Forms;
+using Shared.Dtos;
 using Shared.Entities;
 
 namespace Admin.Client.Services.Api;
@@ -65,6 +66,18 @@ public class RewardItemApiClient: ApiClientBase, IRewardItemApiClient
         await base.DeleteAsync(
             $"api/admin/items/{id}",
             failedMessage: "優待商品の削除に失敗しました。",
+            cancellationToken: cancellationToken);
+    }
+
+    public Task<List<RewardItem>> BulkUpdateOrderPointsAsync(
+        RewardItemBulkUpdateRequestDto request,
+        CancellationToken cancellationToken = default)
+    {
+        return PutAsync<RewardItemBulkUpdateRequestDto, List<RewardItem>>(
+            "api/admin/items/bulk-order-points",
+            request,
+            validationMessage: "入力内容を確認してください。",
+            failedMessage: "優待商品の必要ポイント・表示順の一括更新に失敗しました。",
             cancellationToken: cancellationToken);
     }
 

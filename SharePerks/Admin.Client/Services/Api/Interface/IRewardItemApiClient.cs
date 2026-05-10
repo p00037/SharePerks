@@ -1,5 +1,6 @@
 ﻿using Admin.Client.Models;
 using Microsoft.AspNetCore.Components.Forms;
+using Shared.Dtos;
 using Shared.Entities;
 
 namespace Admin.Client.Services.Api.Interface
@@ -16,6 +17,9 @@ namespace Admin.Client.Services.Api.Interface
             int id,
             RewardItemInput input,
             IBrowserFile? imageFile = null,
+            CancellationToken cancellationToken = default);
+        Task<List<RewardItem>> BulkUpdateOrderPointsAsync(
+            RewardItemBulkUpdateRequestDto request,
             CancellationToken cancellationToken = default);
         Task DeleteAsync(int id, CancellationToken cancellationToken = default);
     }

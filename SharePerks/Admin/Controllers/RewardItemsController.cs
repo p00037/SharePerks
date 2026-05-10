@@ -3,6 +3,7 @@ using Admin.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Dtos;
 using Shared.Entities;
 
 namespace Admin.Controllers;
@@ -108,6 +109,53 @@ public class RewardItemsController : ControllerBase
         _logger.LogInformation("優待商品を更新しました (ItemId: {ItemId}, ItemCode: {ItemCode})", entity.ItemId, entity.ItemCode);
 
         return Ok(entity);
+    }
+
+    [HttpPut("bulk-order-points")]
+    public async Task<ActionResult<List<RewardItem>>> BulkUpdateOrderPoints(RewardItemBulkUpdateRequestDto request)
+    {
+        if (request.Items.Count == 0)
+        {
+            ModelState.AddModelError(nameof(request.Items), "更新対象の商品を指定してください。");
+            return BadRequest(new ValidationProblemDetails(ModelState));
+        }
+
+        foreach (var row in request.Items)
+        {
+            if (row.RequiredPoints < 1)
+            {
+                ModelState.AddModelError(nameof(row.RequiredPoints), "必要ポイントは1以上で入力してください。");
+            }
+
+            if (row.DisplayOrder < 0)
+            {
+                ModelState.AddModelError(nameof(row.DisplayOrder), "表示順は0以上で入力してください。");
+            }
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(new ValidationProblemDetails(ModelState));
+        }
+
+        foreach (var row in request.Items)
+        {
+            var entity = await _unitOfWork.RewardItems.GetByIdAsync(row.ItemId);
+            if (entity is null)
+            {
+                ModelState.AddModelError(nameof(row.ItemId), $"対象の商品が見つかりません。ItemId: {row.ItemId}");
+                return BadRequest(new ValidationProblemDetails(ModelState));
+            }
+
+            entity.RequiredPoints = row.RequiredPoints;
+            entity.DisplayOrder = row.DisplayOrder;
+            entity.UpdatedAt = DateTime.UtcNow;
+            _unitOfWork.RewardItems.Update(entity);
+        }
+
+        await _unitOfWork.SaveChangesAsync();
+        var items = await _unitOfWork.RewardItems.ListAsync();
+        return Ok(items);
     }
 
     [HttpDelete("{id:int}")]
