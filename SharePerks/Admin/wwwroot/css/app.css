@@ -102,3 +102,26 @@
         border-radius: 20px;
     }
 }
+
+.bulk-edit-grid__input {
+    width: 7rem;
+    max-width: 100%;
+    height: 2.25rem;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid var(--mud-palette-lines-inputs);
+    border-radius: 4px;
+    background: var(--mud-palette-surface);
+    color: var(--mud-palette-text-primary);
+    font: inherit;
+    text-align: right;
+}
+
+.bulk-edit-grid__input:focus {
+    border-color: var(--mud-palette-primary);
+    outline: 2px solid color-mix(in srgb, var(--mud-palette-primary) 28%, transparent);
+    outline-offset: 1px;
+}
+
+.bulk-edit-grid__summary {
+    align-self: center;
+}

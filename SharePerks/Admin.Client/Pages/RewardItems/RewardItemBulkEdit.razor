@@ -1,0 +1,107 @@
+@page "/reward-items/bulk-edit"
+@using Admin.Client.Components
+@using Admin.Client.Models
+
+@inherits FormComponentBase<List<RewardItemBulkEditRow>>
+
+<PageTitle>ポイント・表示順 一括編集</PageTitle>
+
+<MudPaper Class="pa-6" Elevation="1">
+    <MudStack Spacing="2">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+            <MudStack>
+                <MudText Typo="Typo.h5">ポイント・表示順 一括編集</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">既存商品の必要ポイントと表示順をまとめて更新します。</MudText>
+            </MudStack>
+            <MudStack Row="true" Spacing="1">
+                <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="HandleReloadAsync">
+                    再読み込み
+                </MudButton>
+                <MudButton Variant="Variant.Text" Color="Color.Default" Href="reward-items">
+                    一覧へ戻る
+                </MudButton>
+            </MudStack>
+        </MudStack>
+
+        @if (!string.IsNullOrWhiteSpace(_serverErrorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Variant="Variant.Filled">
+                @_serverErrorMessage
+            </MudAlert>
+        }
+
+        @if (_editContext is not null)
+        {
+            <EditForm EditContext="_editContext" OnValidSubmit="HandleSaveAsync">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                @if (_formModel.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">登録済みの商品はありません。</MudAlert>
+                }
+                else
+                {
+                    <MudTable Items="_formModel" Hover="true" Elevation="0" Dense="true" Striped="true" Bordered="true" Outlined="true">
+                        <HeaderContent>
+                            <MudTh>商品コード</MudTh>
+                            <MudTh>商品名</MudTh>
+                            <MudTh Class="text-center">公開状態</MudTh>
+                            <MudTh Class="text-center">必要ポイント</MudTh>
+                            <MudTh Class="text-center">表示順</MudTh>
+                            <MudTh Class="text-center">変更</MudTh>
+                        </HeaderContent>
+                        <RowTemplate Context="row">
+                            <MudTd DataLabel="商品コード">@row.ItemCode</MudTd>
+                            <MudTd DataLabel="商品名">@row.ItemName</MudTd>
+                            <MudTd DataLabel="公開状態" Class="text-center">
+                                <MudChip T="string"
+                                         Variant="Variant.Filled"
+                                         Size="Size.Small"
+                                         Color="@(row.IsActive ? Color.Success : Color.Default)">
+                                    @(row.IsActive ? "公開" : "非公開")
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="必要ポイント" Class="text-center">
+                                <input id="@GetCellId(row.RowIndex, RequiredPointsColumnIndex)"
+                                       class="bulk-edit-grid__input"
+                                       type="number"
+                                       min="1"
+                                       value="@row.RequiredPoints"
+                                       @oninput="args => UpdateRequiredPoints(row, args.Value)"
+                                       onkeydown="@GetArrowKeyHandler(row.RowIndex, RequiredPointsColumnIndex)" />
+                            </MudTd>
+                            <MudTd DataLabel="表示順" Class="text-center">
+                                <input id="@GetCellId(row.RowIndex, DisplayOrderColumnIndex)"
+                                       class="bulk-edit-grid__input"
+                                       type="number"
+                                       min="0"
+                                       value="@row.DisplayOrder"
+                                       @oninput="args => UpdateDisplayOrder(row, args.Value)"
+                                       onkeydown="@GetArrowKeyHandler(row.RowIndex, DisplayOrderColumnIndex)" />
+                            </MudTd>
+                            <MudTd DataLabel="変更" Class="text-center">
+                                @if (row.IsChanged)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Filled">変更あり</MudChip>
+                                }
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                }
+
+                <MudStack Row="true" Spacing="2" Class="mt-4">
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               ButtonType="ButtonType.Submit"
+                               Disabled="@(!HasChanges)">
+                        変更行を保存
+                    </MudButton>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="bulk-edit-grid__summary">
+                        変更行: @ChangedCount 件
+                    </MudText>
+                </MudStack>
+            </EditForm>
+        }
+    </MudStack>
+</MudPaper>

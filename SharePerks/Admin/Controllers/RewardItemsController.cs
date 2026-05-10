@@ -3,6 +3,7 @@ using Admin.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Dtos;
 using Shared.Entities;
 
 namespace Admin.Controllers;
@@ -108,6 +109,58 @@ public class RewardItemsController : ControllerBase
         _logger.LogInformation("優待商品を更新しました (ItemId: {ItemId}, ItemCode: {ItemCode})", entity.ItemId, entity.ItemCode);
 
         return Ok(entity);
+    }
+
+    [HttpPut("bulk-order-points")]
+    public async Task<ActionResult<List<RewardItem>>> BulkUpdateOrderPoints(RewardItemBulkUpdateRequestDto? request)
+    {
+        if (request?.Items is not { Count: > 0 } items)
+        {
+            ModelState.AddModelError(nameof(RewardItemBulkUpdateRequestDto.Items), "更新対象の商品を指定してください。");
+            return BadRequest(new ValidationProblemDetails(ModelState));
+        }
+
+        foreach (var row in items)
+        {
+            if (row.RequiredPoints < 1)
+            {
+                ModelState.AddModelError(nameof(RewardItemBulkUpdateRowDto.RequiredPoints), "必要ポイントは1以上で入力してください。");
+            }
+
+            if (row.DisplayOrder < 0)
+            {
+                ModelState.AddModelError(nameof(RewardItemBulkUpdateRowDto.DisplayOrder), "表示順は0以上で入力してください。");
+            }
+        }
+
+        foreach (var duplicateItemId in items.GroupBy(row => row.ItemId).Where(group => group.Count() > 1).Select(group => group.Key))
+        {
+            ModelState.AddModelError(nameof(RewardItemBulkUpdateRowDto.ItemId), $"同じ商品が複数回指定されています。ItemId: {duplicateItemId}");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(new ValidationProblemDetails(ModelState));
+        }
+
+        foreach (var row in items)
+        {
+            var entity = await _unitOfWork.RewardItems.GetByIdAsync(row.ItemId);
+            if (entity is null)
+            {
+                ModelState.AddModelError(nameof(RewardItemBulkUpdateRowDto.ItemId), $"対象の商品が見つかりません。ItemId: {row.ItemId}");
+                return BadRequest(new ValidationProblemDetails(ModelState));
+            }
+
+            entity.RequiredPoints = row.RequiredPoints;
+            entity.DisplayOrder = row.DisplayOrder;
+            entity.UpdatedAt = DateTime.UtcNow;
+            _unitOfWork.RewardItems.Update(entity);
+        }
+
+        await _unitOfWork.SaveChangesAsync();
+        var updatedItems = await _unitOfWork.RewardItems.ListAsync();
+        return Ok(updatedItems);
     }
 
     [HttpDelete("{id:int}")]
