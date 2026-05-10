@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace User.Client.Services;
 
 public sealed class RewardSelectionState
@@ -58,9 +60,17 @@ public sealed record SelectedRewardItem(
 
 public sealed class AddressInput
 {
+    [Required(ErrorMessage = "郵便番号を入力してください。")]
     public string PostalCode { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "電話番号を入力してください。")]
     public string PhoneNumber { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "住所1を入力してください。")]
     public string Address1 { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "住所2を入力してください。")]
     public string Address2 { get; set; } = string.Empty;
+
     public string? Address3 { get; set; }
 }
