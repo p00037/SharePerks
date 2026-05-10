@@ -210,6 +210,60 @@ public partial class RewardItemsControllerTests
     }
 
     [TestMethod]
+    public async Task BulkUpdateOrderPoints_NullItems_ReturnsValidationProblem()
+    {
+        // Arrange
+        var repoMock = new Mock<IRewardItemRepository>(MockBehavior.Strict);
+
+        var uowMock = new Mock<IUnitOfWork>(MockBehavior.Strict);
+        uowMock.SetupGet(u => u.RewardItems).Returns(repoMock.Object);
+
+        var loggerMock = new Mock<ILogger<RewardItemsController>>();
+        var envMock = new Mock<IWebHostEnvironment>();
+        var controller = new RewardItemsController(uowMock.Object, loggerMock.Object, envMock.Object);
+        var request = new RewardItemBulkUpdateRequestDto(null!);
+
+        // Act
+        var actionResult = await controller.BulkUpdateOrderPoints(request);
+
+        // Assert
+        Assert.IsInstanceOfType(actionResult.Result, typeof(ObjectResult));
+        var objectResult = (ObjectResult)actionResult.Result!;
+        Assert.AreEqual(StatusCodes.Status400BadRequest, objectResult.StatusCode);
+        uowMock.Verify(u => u.SaveChangesAsync(default), Times.Never);
+        repoMock.VerifyNoOtherCalls();
+    }
+
+    [TestMethod]
+    public async Task BulkUpdateOrderPoints_DuplicateItemIds_ReturnsValidationProblem()
+    {
+        // Arrange
+        var repoMock = new Mock<IRewardItemRepository>(MockBehavior.Strict);
+
+        var uowMock = new Mock<IUnitOfWork>(MockBehavior.Strict);
+        uowMock.SetupGet(u => u.RewardItems).Returns(repoMock.Object);
+
+        var loggerMock = new Mock<ILogger<RewardItemsController>>();
+        var envMock = new Mock<IWebHostEnvironment>();
+        var controller = new RewardItemsController(uowMock.Object, loggerMock.Object, envMock.Object);
+        var request = new RewardItemBulkUpdateRequestDto(new[]
+        {
+            new RewardItemBulkUpdateRowDto(1, 100, 1),
+            new RewardItemBulkUpdateRowDto(1, 200, 2)
+        });
+
+        // Act
+        var actionResult = await controller.BulkUpdateOrderPoints(request);
+
+        // Assert
+        Assert.IsInstanceOfType(actionResult.Result, typeof(ObjectResult));
+        var objectResult = (ObjectResult)actionResult.Result!;
+        Assert.AreEqual(StatusCodes.Status400BadRequest, objectResult.StatusCode);
+        uowMock.Verify(u => u.SaveChangesAsync(default), Times.Never);
+        repoMock.VerifyNoOtherCalls();
+    }
+
+    [TestMethod]
     public async Task BulkUpdateOrderPoints_MissingItem_ReturnsValidationProblem()
     {
         // Arrange

@@ -112,25 +112,30 @@ public class RewardItemsController : ControllerBase
     }
 
     [HttpPut("bulk-order-points")]
-    public async Task<ActionResult<List<RewardItem>>> BulkUpdateOrderPoints(RewardItemBulkUpdateRequestDto request)
+    public async Task<ActionResult<List<RewardItem>>> BulkUpdateOrderPoints(RewardItemBulkUpdateRequestDto? request)
     {
-        if (request.Items.Count == 0)
+        if (request?.Items is not { Count: > 0 } items)
         {
-            ModelState.AddModelError(nameof(request.Items), "更新対象の商品を指定してください。");
+            ModelState.AddModelError(nameof(RewardItemBulkUpdateRequestDto.Items), "更新対象の商品を指定してください。");
             return BadRequest(new ValidationProblemDetails(ModelState));
         }
 
-        foreach (var row in request.Items)
+        foreach (var row in items)
         {
             if (row.RequiredPoints < 1)
             {
-                ModelState.AddModelError(nameof(row.RequiredPoints), "必要ポイントは1以上で入力してください。");
+                ModelState.AddModelError(nameof(RewardItemBulkUpdateRowDto.RequiredPoints), "必要ポイントは1以上で入力してください。");
             }
 
             if (row.DisplayOrder < 0)
             {
-                ModelState.AddModelError(nameof(row.DisplayOrder), "表示順は0以上で入力してください。");
+                ModelState.AddModelError(nameof(RewardItemBulkUpdateRowDto.DisplayOrder), "表示順は0以上で入力してください。");
             }
+        }
+
+        foreach (var duplicateItemId in items.GroupBy(row => row.ItemId).Where(group => group.Count() > 1).Select(group => group.Key))
+        {
+            ModelState.AddModelError(nameof(RewardItemBulkUpdateRowDto.ItemId), $"同じ商品が複数回指定されています。ItemId: {duplicateItemId}");
         }
 
         if (!ModelState.IsValid)
@@ -138,12 +143,12 @@ public class RewardItemsController : ControllerBase
             return BadRequest(new ValidationProblemDetails(ModelState));
         }
 
-        foreach (var row in request.Items)
+        foreach (var row in items)
         {
             var entity = await _unitOfWork.RewardItems.GetByIdAsync(row.ItemId);
             if (entity is null)
             {
-                ModelState.AddModelError(nameof(row.ItemId), $"対象の商品が見つかりません。ItemId: {row.ItemId}");
+                ModelState.AddModelError(nameof(RewardItemBulkUpdateRowDto.ItemId), $"対象の商品が見つかりません。ItemId: {row.ItemId}");
                 return BadRequest(new ValidationProblemDetails(ModelState));
             }
 
@@ -154,8 +159,8 @@ public class RewardItemsController : ControllerBase
         }
 
         await _unitOfWork.SaveChangesAsync();
-        var items = await _unitOfWork.RewardItems.ListAsync();
-        return Ok(items);
+        var updatedItems = await _unitOfWork.RewardItems.ListAsync();
+        return Ok(updatedItems);
     }
 
     [HttpDelete("{id:int}")]
